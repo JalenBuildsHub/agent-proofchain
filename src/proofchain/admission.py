@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import hashlib
 import json
 import re
@@ -54,7 +54,27 @@ class AdmissionDecision:
     source: str
 
     def to_receipt(self) -> dict[str, Any]:
-        return asdict(self)
+        """Return a persistence-safe receipt without caller-controlled plaintext."""
+        return {
+            "schema_version": 2,
+            "request_id": self.request_id,
+            "allowed": self.allowed,
+            "decision": self.decision,
+            "reason_codes": self.reason_codes,
+            "content_sha256": self.content_sha256,
+            "injection_matches": self.injection_matches,
+            "claimed_actor_sha256": _text_sha256(self.claimed_actor),
+            "actor_family_sha256": _text_sha256(self.actor_family),
+            "runtime_family_sha256": _text_sha256(self.runtime_family),
+            "capability_sha256": _text_sha256(self.capability),
+            "action_sha256": _text_sha256(self.action),
+            "model_sha256": _text_sha256(self.model),
+            "source_sha256": _text_sha256(self.source),
+        }
+
+
+def _text_sha256(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()
 
 
 def _content_text(content: Any) -> str:
@@ -79,7 +99,7 @@ def evaluate(request: AdmissionRequest, policy: AdmissionPolicy) -> AdmissionDec
     if request.actor_family != request.runtime_family:
         reasons.append("runtime_actor_family_mismatch")
     if not policy.allows(request.actor_family, request.capability):
-        reasons.append(f"capability_not_allowed:{request.capability}")
+        reasons.append("capability_not_allowed")
     if len(raw) > policy.max_content_bytes:
         reasons.append("content_too_large")
     if policy.model_required and not request.model:
@@ -112,4 +132,3 @@ def evaluate(request: AdmissionRequest, policy: AdmissionPolicy) -> AdmissionDec
         model=request.model or "unreported",
         source=request.source,
     )
-

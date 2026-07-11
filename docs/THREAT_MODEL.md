@@ -21,8 +21,8 @@
 - Default-deny capability checks.
 - Actor/runtime family equality requirement.
 - Combined-indicator injection detection.
-- Model/source attribution in every receipt.
-- Content hashes instead of raw prompt storage.
+- Digest-based model/source attribution in every receipt.
+- SHA-256 digests instead of plaintext caller-controlled request fields.
 - Hash-chained SQLite receipts with deterministic verification.
 
 ## Required controls outside this package
@@ -32,4 +32,3 @@
 - Run untrusted agents under separate OS identities or containers.
 - Restrict each worker to an isolated worktree and explicit network policy.
 - Store signed receipt checkpoints outside the worker's administrative boundary.
-

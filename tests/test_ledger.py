@@ -1,3 +1,4 @@
+import json
 import sqlite3
 
 from proofchain import AdmissionPolicy, AdmissionRequest, ReceiptLedger, evaluate
@@ -29,3 +30,30 @@ def test_ledger_tampering_is_detected(tmp_path):
     assert result["valid"] is False
     assert result["failed_sequence"] == 1
 
+
+def test_ledger_never_persists_caller_metadata_plaintext(tmp_path):
+    path = tmp_path / "proof.db"
+    private_path = "C:/Users/private/customer-path"
+    private_action = "token=raw-secret"
+    policy = AdmissionPolicy.from_dict({"actor_capabilities": {"builder": ["read"]}})
+    request = AdmissionRequest(
+        "secret-user@example.com",
+        "builder",
+        "builder",
+        "read",
+        private_action,
+        "model-v1",
+        source=private_path,
+    )
+
+    ReceiptLedger(path).append(evaluate(request, policy))
+    with sqlite3.connect(path) as conn:
+        payload_json = conn.execute("SELECT payload_json FROM receipts").fetchone()[0]
+
+    payload = json.loads(payload_json)
+    assert private_path not in payload_json
+    assert private_action not in payload_json
+    assert "secret-user@example.com" not in payload_json
+    assert payload["source_sha256"]
+    assert payload["action_sha256"]
+    assert payload["claimed_actor_sha256"]

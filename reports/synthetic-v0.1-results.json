@@ -53,7 +53,7 @@
       "matched": true,
       "reason_codes": [
         "unknown_identity_family",
-        "capability_not_allowed:read"
+        "capability_not_allowed"
       ]
     },
     {
@@ -73,7 +73,7 @@
       "id": "deny-reviewer-mutation",
       "matched": true,
       "reason_codes": [
-        "capability_not_allowed:mutation"
+        "capability_not_allowed"
       ]
     },
     {
@@ -83,7 +83,7 @@
       "id": "deny-scout-advisory",
       "matched": true,
       "reason_codes": [
-        "capability_not_allowed:advisory"
+        "capability_not_allowed"
       ]
     },
     {
@@ -177,7 +177,7 @@
       "id": "deny-reviewer-mutation-and-missing-model",
       "matched": true,
       "reason_codes": [
-        "capability_not_allowed:mutation",
+        "capability_not_allowed",
         "model_unreported"
       ]
     },
@@ -189,7 +189,7 @@
       "matched": true,
       "reason_codes": [
         "unknown_identity_family",
-        "capability_not_allowed:mutation",
+        "capability_not_allowed",
         "indicator_3",
         "indicator_5",
         "injection_threshold_met"

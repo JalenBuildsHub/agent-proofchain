@@ -43,8 +43,9 @@ proofchain evaluate --policy examples/policy.json --request examples/injection-r
 
 - Default-deny capability policy.
 - Claimed actor family must match the authenticated runtime family supplied by the host.
-- Model, runtime, action, decision, reason codes, and content hash are recorded.
-- Raw request content is not written to the ledger.
+- Model, runtime, actor, capability, action, source, and content are recorded as
+  SHA-256 digests alongside the decision and safe reason codes.
+- Caller-controlled request fields are not written to the ledger in plaintext.
 - Receipt rows form a SHA-256 hash chain that can be verified independently.
 - Synthetic evaluation fixtures cover spoofing, unauthorized mutation, injection, missing
   model attribution, and ledger tampering.

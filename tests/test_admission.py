@@ -1,3 +1,5 @@
+import json
+
 from proofchain import AdmissionPolicy, AdmissionRequest, evaluate
 
 
@@ -50,7 +52,7 @@ def test_runtime_cannot_spoof_actor_family():
 def test_reviewer_cannot_mutate():
     decision = evaluate(request(actor_family="reviewer", runtime_family="reviewer"), POLICY)
     assert not decision.allowed
-    assert "capability_not_allowed:mutation" in decision.reason_codes
+    assert "capability_not_allowed" in decision.reason_codes
 
 
 def test_missing_model_is_denied():
@@ -68,3 +70,31 @@ def test_combined_injection_indicators_are_denied():
     assert "injection_threshold_met" in decision.reason_codes
     assert "API key" not in str(decision.to_receipt())
 
+
+def test_receipt_hashes_every_caller_controlled_metadata_field():
+    private_values = {
+        "claimed_actor": "secret-user@example.com",
+        "actor_family": "C:/Users/private/actor-family",
+        "runtime_family": "C:/Users/private/actor-family",
+        "capability": "token=private-capability",
+        "action": "password=raw-secret",
+        "model": "customer-private-model",
+        "source": "C:/Users/private/customer-path",
+    }
+    private_policy = AdmissionPolicy.from_dict(
+        {
+            "actor_capabilities": {
+                private_values["actor_family"]: [private_values["capability"]]
+            },
+            "injection_indicators": [],
+        }
+    )
+
+    receipt = evaluate(AdmissionRequest.from_dict(private_values), private_policy).to_receipt()
+    serialized = json.dumps(receipt, sort_keys=True)
+
+    assert receipt["schema_version"] == 2
+    for field, value in private_values.items():
+        assert field not in receipt
+        assert value not in serialized
+        assert f"{field}_sha256" in receipt
