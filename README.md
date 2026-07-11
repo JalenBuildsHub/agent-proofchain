@@ -59,8 +59,11 @@ proofchain evaluate --policy examples/policy.json --request examples/injection-r
 Read [the threat model](docs/THREAT_MODEL.md) and [limitations](docs/LIMITATIONS.md)
 before integrating this into a production agent system.
 
+The wider [studio open-source portfolio](docs/OPEN_SOURCE_PORTFOLIO.md) and
+[program stack](docs/PROGRAM_STACK.md) explain how related tools can grow around the
+provider-neutral core without exposing private studio infrastructure.
+
 ## Project status
 
 `v0.1.0` is a local alpha foundation. The API may change before the first public release.
 See [ROADMAP.md](ROADMAP.md) and [GOVERNANCE.md](GOVERNANCE.md).
-
