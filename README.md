@@ -29,6 +29,7 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 proofchain evaluate --policy examples/policy.json --request examples/safe-request.json --ledger proofchain.db
 proofchain verify --ledger proofchain.db
+proofchain eval --policy examples/policy.json --fixtures evals/synthetic-v0.1.json --output eval-results.json
 pytest
 ```
 
