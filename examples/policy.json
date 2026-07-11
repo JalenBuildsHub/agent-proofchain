@@ -1,0 +1,19 @@
+{
+  "actor_capabilities": {
+    "builder": ["read", "advisory", "mutation"],
+    "reviewer": ["read", "advisory"],
+    "scout": ["read"]
+  },
+  "injection_threshold": 2,
+  "max_content_bytes": 200000,
+  "model_required": true,
+  "injection_indicators": [
+    "ignore .*?(previous|prior|system|developer).*?(instructions|rules|policy)",
+    "reveal|print|dump|exfiltrate|upload.*?(secret|token|credential|api key|password)",
+    "disable|bypass|remove.*?(safety|guardrail|admission|approval|claim|audit)",
+    "execute|run.*?(hidden|encoded|base64|remote).*?(command|script|payload)",
+    "do not (log|audit|report|tell)",
+    "override.*?(owner|lease|permission|policy)"
+  ]
+}
+

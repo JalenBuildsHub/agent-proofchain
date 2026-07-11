@@ -1,0 +1,14 @@
+{
+  "claimed_actor": "build-agent-7",
+  "actor_family": "builder",
+  "runtime_family": "builder",
+  "capability": "mutation",
+  "action": "update_test_fixture",
+  "model": "example-model-v1",
+  "source": "local-cli",
+  "content": {
+    "scope": ["tests/synthetic_fixture.py"],
+    "done_when": "focused tests pass"
+  }
+}
+

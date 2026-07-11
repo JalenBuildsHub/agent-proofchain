@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-proofchain"
+version = "0.1.0"
+description = "Provider-neutral admission decisions and tamper-evident action receipts for AI agents."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Jalen Builds Studio", email = "contact@jalenbuilds.com" }]
+keywords = ["ai-agents", "security", "audit", "prompt-injection", "provenance"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3", "ruff>=0.9", "build>=1.2"]
+
+[project.scripts]
+proofchain = "proofchain.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/proofchain"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
