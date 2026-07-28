@@ -222,7 +222,7 @@ def load_fixtures(path: str | Path) -> list[dict[str, Any]]:
             raise ValueError(f"Fixture {index} must be an object")
         if "expected_allowed" not in fixture or "request" not in fixture:
             raise ValueError(f"Fixture {index} requires expected_allowed and request")
-        if type(fixture["expected_allowed"]) is not bool:
+        if not isinstance(fixture["expected_allowed"], bool):
             raise ValueError(f"Fixture {index} expected_allowed must be a boolean")
         if not isinstance(fixture["request"], dict):
             raise ValueError(f"Fixture {index} request must be an object")
