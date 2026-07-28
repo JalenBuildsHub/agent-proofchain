@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import tempfile
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,7 @@ def _run_scenario(name: str, mutation: str, expected_detected: bool) -> dict[str
         path = Path(directory) / "ledger.db"
         ledger = _seed_ledger(path)
         baseline = ledger.verify()
-        with sqlite3.connect(path) as conn:
+        with closing(sqlite3.connect(path)) as conn:
             conn.execute(mutation)
             conn.commit()
         verification = ledger.verify()
