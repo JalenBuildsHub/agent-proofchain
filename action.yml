@@ -1,0 +1,96 @@
+name: Agent ProofChain evidence
+
+description: Generate privacy-safe admission, conformance, evaluation, and tamper evidence in CI.
+
+author: Jalen Builds Studio
+
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  python-version:
+    description: Python version used to install and run Agent ProofChain.
+    required: false
+    default: "3.13"
+  output-directory:
+    description: Directory in the caller workspace for generated JSON and Markdown evidence.
+    required: false
+    default: proofchain-evidence
+  policy:
+    description: Optional policy path. Defaults to the action's synthetic example policy.
+    required: false
+    default: ""
+  fixtures:
+    description: Optional fixture path. Defaults to the action's synthetic v0.2 corpus.
+    required: false
+    default: ""
+  vector:
+    description: Optional receipt-vector path. Defaults to the bundled conformance vector.
+    required: false
+    default: ""
+
+outputs:
+  evidence-directory:
+    description: Directory containing generated evidence files.
+    value: ${{ steps.evidence.outputs.evidence-directory }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Agent ProofChain from the action source
+      shell: bash
+      run: python -m pip install "$GITHUB_ACTION_PATH"
+
+    - name: Generate evidence
+      id: evidence
+      shell: bash
+      env:
+        INPUT_OUTPUT_DIRECTORY: ${{ inputs.output-directory }}
+        INPUT_POLICY: ${{ inputs.policy }}
+        INPUT_FIXTURES: ${{ inputs.fixtures }}
+        INPUT_VECTOR: ${{ inputs.vector }}
+      run: |
+        set -euo pipefail
+
+        output_directory="$INPUT_OUTPUT_DIRECTORY"
+        policy_path="$INPUT_POLICY"
+        fixtures_path="$INPUT_FIXTURES"
+        vector_path="$INPUT_VECTOR"
+
+        if [[ -z "$policy_path" ]]; then
+          policy_path="$GITHUB_ACTION_PATH/examples/policy.json"
+        fi
+        if [[ -z "$fixtures_path" ]]; then
+          fixtures_path="$GITHUB_ACTION_PATH/evals/synthetic-v0.2.json"
+        fi
+        if [[ -z "$vector_path" ]]; then
+          vector_path="$GITHUB_ACTION_PATH/spec/vectors/receipt-chain-v2.json"
+        fi
+
+        mkdir -p "$output_directory"
+
+        proofchain demo --json > "$output_directory/demo.json"
+        proofchain conformance \
+          --vector "$vector_path" \
+          --output "$output_directory/conformance.json" \
+          > /dev/null
+        proofchain eval \
+          --policy "$policy_path" \
+          --fixtures "$fixtures_path" \
+          --output "$output_directory/evaluation.json" \
+          --markdown-output "$output_directory/evaluation.md" \
+          > /dev/null
+        proofchain tamper-eval \
+          --output "$output_directory/tamper.json" \
+          --markdown-output "$output_directory/tamper.md" \
+          > /dev/null
+
+        echo "evidence-directory=$output_directory" >> "$GITHUB_OUTPUT"
+
+        echo "Generated Agent ProofChain evidence in $output_directory"
