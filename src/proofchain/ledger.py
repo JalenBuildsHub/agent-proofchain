@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 from typing import Any
 
 from .admission import AdmissionDecision
@@ -61,4 +61,3 @@ class ReceiptLedger:
                 return {"valid": False, "receipts": len(rows), "failed_sequence": row["sequence"]}
             previous_hash = row["receipt_hash"]
         return {"valid": True, "receipts": len(rows), "last_hash": previous_hash}
-
