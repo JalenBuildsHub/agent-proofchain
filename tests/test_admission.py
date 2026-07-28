@@ -2,7 +2,6 @@ import json
 
 from proofchain import AdmissionPolicy, AdmissionRequest, evaluate
 
-
 POLICY = AdmissionPolicy.from_dict(
     {
         "actor_capabilities": {
