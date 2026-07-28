@@ -1,0 +1,52 @@
+name: action smoke
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-action:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run local Agent ProofChain action
+        id: proofchain
+        uses: ./
+        with:
+          python-version: "3.13"
+          output-directory: proofchain-action-evidence
+
+      - name: Validate action evidence
+        shell: bash
+        env:
+          EVIDENCE_DIRECTORY: ${{ steps.proofchain.outputs.evidence-directory }}
+        run: >-
+          python -c "import json, pathlib;
+          root = pathlib.Path(r'$EVIDENCE_DIRECTORY');
+          required = ['demo.json', 'conformance.json', 'evaluation.json', 'evaluation.md',
+          'tamper.json', 'tamper.md'];
+          missing = [name for name in required if not (root / name).is_file()];
+          assert not missing, missing;
+          assert json.loads((root / 'conformance.json').read_text(encoding='utf-8'))['valid'];
+          evaluation = json.loads((root / 'evaluation.json').read_text(encoding='utf-8'));
+          assert evaluation['summary']['false_allows'] == 0;
+          assert evaluation['summary']['false_denies'] == 0;
+          tamper = json.loads((root / 'tamper.json').read_text(encoding='utf-8'));
+          assert tamper['all_expected_outcomes_matched']"
+
+      - name: Upload action evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: proofchain-action-${{ runner.os }}
+          path: proofchain-action-evidence/
+          if-no-files-found: error
