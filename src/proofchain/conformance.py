@@ -56,7 +56,7 @@ def canonical_payload_json(payload: dict[str, Any]) -> str:
 def compute_receipt_hash(previous_hash: str, payload: dict[str, Any]) -> str:
     """Compute SHA-256(previous_hash + newline + canonical payload JSON)."""
 
-    material = f"{previous_hash}\n{canonical_payload_json(payload)}".encode("utf-8")
+    material = f"{previous_hash}\n{canonical_payload_json(payload)}".encode()
     return hashlib.sha256(material).hexdigest()
 
 
@@ -189,5 +189,5 @@ def load_vector(path: str | Path) -> dict[str, Any]:
 
     value = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(value, dict):
-        raise ValueError("conformance vector must be a JSON object")
+        raise TypeError("conformance vector must be a JSON object")
     return value
