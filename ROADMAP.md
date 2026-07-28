@@ -19,7 +19,8 @@ Foundation completed on feature branches:
 - [x] Cross-platform CI generation of evaluation evidence artifacts.
 - [x] Network-free one-command demonstration.
 - [x] Draft receipt-v2 and vector JSON Schemas.
-- [x] Portable receipt-chain conformance vector and dependency-free verifier.
+- [x] Portable receipt-chain conformance vector and dependency-free Python verifier.
+- [x] Dependency-free JavaScript verifier passing the same published vector.
 - [x] Draft protocol documentation for canonicalization, hashing, privacy, and versioning.
 
 Remaining before calling v0.2 complete:
@@ -28,7 +29,7 @@ Remaining before calling v0.2 complete:
 - [ ] Provider SDK integration examples that preserve the authenticated host-context boundary.
 - [ ] Clean-install evaluation receipts from outside Jalen Builds Studio.
 - [ ] Benchmark methodology review and versioning policy.
-- [ ] A second-language verifier that passes the published vector.
+- [ ] External review of cross-language canonicalization edge cases.
 - [ ] External signed checkpoints for final-ledger truncation detection.
 
 ## v0.3 — remote-worker boundary
