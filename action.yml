@@ -34,6 +34,33 @@ outputs:
   evidence-directory:
     description: Directory containing generated evidence files.
     value: ${{ steps.evidence.outputs.evidence-directory }}
+  conformance-valid:
+    description: Whether the selected receipt vector passed conformance verification.
+    value: ${{ steps.evidence.outputs.conformance-valid }}
+  chain-head:
+    description: Final receipt-chain hash from the selected conformance vector.
+    value: ${{ steps.evidence.outputs.chain-head }}
+  fixture-sha256:
+    description: SHA-256 digest of the selected evaluation fixture corpus.
+    value: ${{ steps.evidence.outputs.fixture-sha256 }}
+  evaluation-correct:
+    description: Number of fixtures matching classification and reason-code expectations.
+    value: ${{ steps.evidence.outputs.evaluation-correct }}
+  evaluation-total:
+    description: Total number of evaluated fixtures.
+    value: ${{ steps.evidence.outputs.evaluation-total }}
+  false-allows:
+    description: Number of expected-deny fixtures that were allowed.
+    value: ${{ steps.evidence.outputs.false-allows }}
+  false-denies:
+    description: Number of expected-allow fixtures that were denied.
+    value: ${{ steps.evidence.outputs.false-denies }}
+  tamper-matched:
+    description: Number of tamper scenarios matching their documented expected outcome.
+    value: ${{ steps.evidence.outputs.tamper-matched }}
+  tamper-total:
+    description: Total number of tamper scenarios.
+    value: ${{ steps.evidence.outputs.tamper-total }}
 
 runs:
   using: composite
@@ -91,6 +118,59 @@ runs:
           --markdown-output "$output_directory/tamper.md" \
           > /dev/null
 
-        echo "evidence-directory=$output_directory" >> "$GITHUB_OUTPUT"
+        OUTPUT_DIRECTORY="$output_directory" python - <<'PY'
+        import json
+        import os
+        from pathlib import Path
+
+        root = Path(os.environ["OUTPUT_DIRECTORY"])
+        conformance = json.loads((root / "conformance.json").read_text(encoding="utf-8"))
+        evaluation = json.loads((root / "evaluation.json").read_text(encoding="utf-8"))
+        tamper = json.loads((root / "tamper.json").read_text(encoding="utf-8"))
+
+        summary = evaluation["summary"]
+        benchmark = evaluation["benchmark"]
+        outputs = {
+            "evidence-directory": str(root),
+            "conformance-valid": str(bool(conformance["valid"])).lower(),
+            "chain-head": conformance["last_hash"],
+            "fixture-sha256": benchmark["fixture_sha256"],
+            "evaluation-correct": str(summary["correct"]),
+            "evaluation-total": str(summary["total"]),
+            "false-allows": str(summary["false_allows"]),
+            "false-denies": str(summary["false_denies"]),
+            "tamper-matched": str(tamper["matched"]),
+            "tamper-total": str(tamper["scenario_count"]),
+        }
+        with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as stream:
+            for key, value in outputs.items():
+                stream.write(f"{key}={value}\n")
+
+        markdown = "\n".join(
+            [
+                "## Agent ProofChain evidence",
+                "",
+                f"- Receipt conformance: **{'passed' if conformance['valid'] else 'failed'}**",
+                f"- Chain head: `{conformance['last_hash']}`",
+                (
+                    "- Admission evaluation: "
+                    f"**{summary['correct']} / {summary['total']} matched**"
+                ),
+                f"- False allows / false denies: **{summary['false_allows']} / {summary['false_denies']}**",
+                f"- Fixture SHA-256: `{benchmark['fixture_sha256']}`",
+                (
+                    "- Tamper outcomes: "
+                    f"**{tamper['matched']} / {tamper['scenario_count']} matched**"
+                ),
+                "",
+                "> Synthetic evaluation and local chain evidence are not a production security certification.",
+                f"> Known limitation: {tamper['limitation']}",
+                "",
+                f"Evidence directory: `{root}`",
+            ]
+        )
+        with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as stream:
+            stream.write(markdown + "\n")
+        PY
 
         echo "Generated Agent ProofChain evidence in $output_directory"
