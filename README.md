@@ -159,6 +159,28 @@ proofchain tamper-eval \
 
 Read [Evaluation methodology](docs/EVALUATION_V0_2.md).
 
+## Portable receipt protocol
+
+The repository now includes a draft receipt-v2 JSON Schema, a receipt-chain vector schema, and a
+deterministic test vector that can be implemented by another language or runtime.
+
+```bash
+proofchain conformance \
+  --vector spec/vectors/receipt-chain-v2.json \
+  --output artifacts/conformance-v1.json
+```
+
+A conforming verifier recomputes the canonical payload JSON and receipt hashes, validates sequence
+and previous-hash linkage, rejects caller-controlled plaintext, and returns machine-readable
+errors. The reference vector's expected final hash is:
+
+```text
+abd74ad6e6c978f83a1d95fb58a6fdc481d80e0dc84613a3b3a031d0c8e465ee
+```
+
+Read the [draft protocol specification](docs/PROTOCOL_SPEC.md). Conformance means compatible
+serialization and verification behavior; it is not a security certification.
+
 ## Project direction
 
 The long-term goal is an inspectable, provider-neutral admission and receipt protocol that can be
@@ -171,7 +193,7 @@ Near-term gates include:
 - provider SDK examples that preserve authenticated host context;
 - benchmark methodology versioning;
 - signed external checkpoints;
-- cross-language receipt verification.
+- a second-language verifier using the published vectors.
 
 Read [Vision](VISION.md), [Roadmap](ROADMAP.md), and
 [Adoption roadmap](docs/ADOPTION_ROADMAP.md).
@@ -184,6 +206,7 @@ Useful contributions include:
 - benign-language cases that expose false positives;
 - cross-platform fixes;
 - conformance and compatibility tests;
+- a verifier in another language using the published vector;
 - privacy-preserving report improvements;
 - provider integration examples with explicit trust boundaries;
 - documentation corrections and clearer examples.
@@ -201,5 +224,5 @@ provider-neutral core without exposing private studio infrastructure.
 ## Status
 
 `v0.1.0` is an alpha foundation. APIs and receipt schemas may change before a stable release.
-The v0.2 evaluation work remains a pre-release pilot until independent fixtures and external
-review exist.
+The v0.2 evaluation and draft protocol work remain pre-release until independent fixtures,
+external review, and at least one outside implementation exist.
