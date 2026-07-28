@@ -23,3 +23,20 @@ jobs:
       - run: ruff check .
       - run: pytest
       - run: python -m build
+      - name: Generate v0.2 admission evaluation evidence
+        run: >-
+          proofchain eval
+          --policy examples/policy.json
+          --fixtures evals/synthetic-v0.2.json
+          --output artifacts/eval-v0.2.json
+          --markdown-output artifacts/eval-v0.2.md
+      - name: Generate v0.2 tamper evaluation evidence
+        run: >-
+          proofchain tamper-eval
+          --output artifacts/tamper-v0.2.json
+          --markdown-output artifacts/tamper-v0.2.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proofchain-evidence-${{ runner.os }}-py${{ matrix.python-version }}
+          path: artifacts/
+          if-no-files-found: error
