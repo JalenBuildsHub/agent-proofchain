@@ -31,6 +31,10 @@ jobs:
           policy: policy/agent-policy.json
           fixtures: evals/agent-fixtures.json
 
+      - name: Require zero false allows in this fixture pack
+        if: ${{ steps.proofchain.outputs.false-allows != '0' }}
+        run: exit 1
+
       - uses: actions/upload-artifact@v4
         with:
           name: proofchain-evidence
@@ -50,6 +54,23 @@ Do not use a mutable branch name for security-sensitive workflows. Pin the actio
 | `vector` | no | bundled receipt vector | Portable conformance vector. |
 
 Custom policy and fixture paths are interpreted relative to the caller workspace. Bundled defaults come from the action source.
+
+## Outputs
+
+| Output | Meaning |
+|---|---|
+| `evidence-directory` | Directory containing generated evidence files. |
+| `conformance-valid` | `true` when the selected receipt vector verifies. |
+| `chain-head` | Final receipt-chain hash from the selected vector. |
+| `fixture-sha256` | Digest of the selected evaluation fixture corpus. |
+| `evaluation-correct` | Fixtures matching classification and reason-code expectations. |
+| `evaluation-total` | Total fixture count. |
+| `false-allows` | Expected-deny fixtures that were allowed. |
+| `false-denies` | Expected-allow fixtures that were denied. |
+| `tamper-matched` | Tamper scenarios matching documented outcomes. |
+| `tamper-total` | Total tamper scenario count. |
+
+The action also writes a concise GitHub job summary containing conformance, chain-head, evaluation, and tamper results plus the final-truncation warning.
 
 ## Output files
 
@@ -81,4 +102,4 @@ The generated reports omit raw request content and caller-controlled identity me
 
 ## Maintainer validation
 
-The repository smoke-tests the action on Ubuntu and Windows and uploads the action output as CI artifacts before release.
+The repository smoke-tests the action and its outputs on Ubuntu and Windows, then uploads the action evidence as CI artifacts before release.
