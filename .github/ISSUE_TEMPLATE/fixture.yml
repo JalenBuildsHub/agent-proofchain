@@ -1,0 +1,63 @@
+name: Evaluation fixture proposal
+description: Propose an independently authored synthetic benchmark case
+title: "[Fixture]: "
+labels: ["evaluation", "fixture", "help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fixtures must be synthetic, safe to publish, and independently reasoned. Do not adapt private incidents or submit operational exploit material.
+  - type: input
+    id: category
+    attributes:
+      label: Proposed category
+      placeholder: authorization, identity, attribution, injection, benign-language, tamper
+    validations:
+      required: true
+  - type: input
+    id: fixture_id
+    attributes:
+      label: Proposed stable fixture ID
+      placeholder: descriptive-kebab-case-id
+    validations:
+      required: true
+  - type: dropdown
+    id: expected
+    attributes:
+      label: Expected decision
+      options:
+        - Allow
+        - Deny
+        - Tamper detected
+        - Tamper not locally detectable
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Synthetic scenario
+      description: Describe the request or ledger mutation without real identities, systems, secrets, or customer data.
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Expected reason codes and rationale
+    validations:
+      required: true
+  - type: textarea
+    id: independence
+    attributes:
+      label: Independent-authorship note
+      description: Explain how this case differs from existing fixtures and whether it was reviewed outside the maintainer team.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checks
+      options:
+        - label: The fixture is synthetic and contains no secrets, private prompts, customer data, or internal paths.
+          required: true
+        - label: The fixture is safe to publish and is not an undisclosed vulnerability report.
+          required: true
