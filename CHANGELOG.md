@@ -24,3 +24,8 @@
 - Added structured bug, feature, and independent-fixture contribution forms.
 - Added pull-request guidance, Dependabot configuration, typed-package metadata, and pinned
   OpenSSF Scorecard analysis.
+- Added a dependency-free portable receipt-v2 conformance verifier and CLI command.
+- Added receipt and vector JSON Schemas, a deterministic two-receipt vector, and an exact expected
+  chain head for independent implementations.
+- Added protocol documentation covering canonical JSON, chain hashing, privacy semantics,
+  versioning, and final-truncation limitations.
