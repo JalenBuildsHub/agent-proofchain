@@ -9,6 +9,7 @@
 
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 
 const digestPattern = /^[0-9a-f]{64}$/;
 const digestFields = [
@@ -86,15 +87,21 @@ function validateReceipt(payload, sequence) {
   const missing = [...requiredFields].filter((field) => !(field in payload)).sort();
   const extra = fields.filter((field) => !requiredFields.has(field)).sort();
   const plaintext = fields.filter((field) => forbiddenPlaintext.has(field)).sort();
-  if (missing.length > 0) errors.push(`receipt ${sequence}: missing fields: ${missing.join(", ")}`);
-  if (extra.length > 0) errors.push(`receipt ${sequence}: unknown fields: ${extra.join(", ")}`);
+  if (missing.length > 0) {
+    errors.push(`receipt ${sequence}: missing fields: ${missing.join(", ")}`);
+  }
+  if (extra.length > 0) {
+    errors.push(`receipt ${sequence}: unknown fields: ${extra.join(", ")}`);
+  }
   if (plaintext.length > 0) {
     errors.push(
       `receipt ${sequence}: caller-controlled plaintext fields are forbidden: ${plaintext.join(", ")}`,
     );
   }
 
-  if (payload.schema_version !== 2) errors.push(`receipt ${sequence}: schema_version must equal 2`);
+  if (payload.schema_version !== 2) {
+    errors.push(`receipt ${sequence}: schema_version must equal 2`);
+  }
   if (typeof payload.request_id !== "string" || payload.request_id.trim() === "") {
     errors.push(`receipt ${sequence}: request_id must be a non-empty string`);
   }
@@ -128,12 +135,26 @@ function validateReceipt(payload, sequence) {
 export function verifyVector(document) {
   const errors = [];
   if (document === null || typeof document !== "object" || Array.isArray(document)) {
-    return { valid: false, receipts: 0, last_hash: "GENESIS", errors: ["vector document must be an object"] };
+    return {
+      valid: false,
+      receipts: 0,
+      last_hash: "GENESIS",
+      errors: ["vector document must be an object"],
+    };
   }
-  if (document.schema_version !== 1) errors.push("vector schema_version must equal 1");
-  if (document.genesis !== "GENESIS") errors.push("vector genesis must equal GENESIS");
+  if (document.schema_version !== 1) {
+    errors.push("vector schema_version must equal 1");
+  }
+  if (document.genesis !== "GENESIS") {
+    errors.push("vector genesis must equal GENESIS");
+  }
   if (!Array.isArray(document.receipts)) {
-    return { valid: false, receipts: 0, last_hash: "GENESIS", errors: [...errors, "receipts must be an array"] };
+    return {
+      valid: false,
+      receipts: 0,
+      last_hash: "GENESIS",
+      errors: [...errors, "receipts must be an array"],
+    };
   }
 
   let previousHash = "GENESIS";
@@ -175,6 +196,6 @@ async function main() {
   process.exitCode = result.valid ? 0 : 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   await main();
 }
