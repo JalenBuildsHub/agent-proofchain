@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: mailto:contact@jalenbuilds.com
+    about: Report vulnerabilities privately. Do not publish live exploit details or private data.
+  - name: Support guidance
+    url: https://github.com/JalenBuildsHub/agent-proofchain/blob/main/SUPPORT.md
+    about: Read support, reproduction, and privacy guidance before opening an issue.
