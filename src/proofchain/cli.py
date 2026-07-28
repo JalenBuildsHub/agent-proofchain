@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from .admission import AdmissionRequest, evaluate
+from .conformance import load_vector, verify_receipt_chain_vector
 from .demo import render_demo, run_demo
 from .evals import load_fixtures, render_evaluation_markdown, run_evaluation
 from .ledger import ReceiptLedger
@@ -26,6 +27,12 @@ def main() -> int:
 
     demo_parser = sub.add_parser("demo", help="run a network-free end-to-end demonstration")
     demo_parser.add_argument("--json", action="store_true", dest="as_json")
+
+    conformance_parser = sub.add_parser(
+        "conformance", help="verify a portable receipt-chain conformance vector"
+    )
+    conformance_parser.add_argument("--vector", required=True)
+    conformance_parser.add_argument("--output")
 
     evaluate_parser = sub.add_parser("evaluate")
     evaluate_parser.add_argument("--policy", required=True)
@@ -51,6 +58,14 @@ def main() -> int:
         result = run_demo()
         print(json.dumps(result, indent=2, sort_keys=True) if args.as_json else render_demo(result))
         return 0
+
+    if args.command == "conformance":
+        result = verify_receipt_chain_vector(load_vector(args.vector))
+        rendered = json.dumps(result, indent=2, sort_keys=True)
+        if args.output:
+            _write_text(args.output, rendered + "\n")
+        print(rendered)
+        return 0 if result["valid"] else 1
 
     if args.command == "verify":
         ledger = ReceiptLedger(args.ledger)
