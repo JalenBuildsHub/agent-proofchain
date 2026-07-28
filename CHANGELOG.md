@@ -29,3 +29,8 @@
   chain head for independent implementations.
 - Added protocol documentation covering canonical JSON, chain hashing, privacy semantics,
   versioning, and final-truncation limitations.
+- Added a dependency-free JavaScript implementation that verifies the published receipt vector.
+- Added a reusable composite GitHub Action for generating demo, conformance, evaluation, and
+  tamper evidence in downstream CI.
+- Added Ubuntu and Windows smoke tests for the action, release gates, and an evidence-led launch
+  plan.
