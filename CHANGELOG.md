@@ -9,3 +9,12 @@
 - Added synthetic tests, examples, and project governance documents.
 - Added a 20-task synthetic admission evaluation pilot and machine-readable runner.
 - Replaced plaintext caller metadata in receipt schema v2 with SHA-256 correlation digests.
+- Added a 40-case v0.2 adversarial and benign evaluation corpus with category and reason-code
+  contracts.
+- Added allow and deny precision/recall, false-allow and false-deny rates, local latency,
+  category summaries, fixture digests, and Markdown report rendering.
+- Added deterministic ledger-tamper reports that explicitly document the undetectable
+  final-row truncation case without an external checkpoint.
+- Added provider-neutral OpenAI, Anthropic, Google, and local-runtime adapter contracts bound
+  to host-authenticated identity and attribution context.
+- Added cross-platform CI evidence-artifact generation for the v0.2 evaluation pilot.

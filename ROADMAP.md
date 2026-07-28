@@ -8,13 +8,26 @@
 
 ## v0.2 — portable evaluation pilot
 
-- 20–50 provider-neutral adversarial tasks.
-- Precision, recall, false-positive, latency, and tamper-detection reports.
-- OpenAI, Anthropic, Google, and local-runtime adapter contracts.
+Foundation completed on the feature branch:
+
+- [x] 40 provider-neutral synthetic adversarial and benign tasks.
+- [x] Allow/deny precision and recall, false-allow and false-deny rates, category summaries,
+  reason-code assertions, and local process latency reports.
+- [x] Machine-readable JSON and human-readable Markdown reports.
+- [x] Deterministic ledger-tamper evaluation with the final-truncation limitation reported.
+- [x] Provider-neutral OpenAI, Anthropic, Google, and local-runtime adapter contracts.
+- [x] Cross-platform CI generation of evaluation evidence artifacts.
+
+Remaining before calling v0.2 complete:
+
+- [ ] Independently authored or externally reviewed fixtures.
+- [ ] Provider SDK integration examples that preserve the authenticated host-context boundary.
+- [ ] Clean-install evaluation receipts from outside Jalen Builds Studio.
+- [ ] Benchmark methodology review and versioning policy.
+- [ ] External signed checkpoints for final-ledger truncation detection.
 
 ## v0.3 — remote-worker boundary
 
 - Signed requests, nonce/replay protection, revocation, and scoped grants.
 - Container/worktree reference architecture.
 - External adopter and independent-review evidence.
-
