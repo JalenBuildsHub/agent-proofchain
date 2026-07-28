@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
 import re
 import time
+from dataclasses import dataclass
 from typing import Any
 
 from .policy import AdmissionPolicy
@@ -24,7 +24,7 @@ class AdmissionRequest:
     source: str = "unspecified"
 
     @classmethod
-    def from_dict(cls, value: dict[str, Any]) -> "AdmissionRequest":
+    def from_dict(cls, value: dict[str, Any]) -> AdmissionRequest:
         return cls(
             claimed_actor=str(value.get("claimed_actor", "")),
             actor_family=str(value.get("actor_family", "unknown")),
