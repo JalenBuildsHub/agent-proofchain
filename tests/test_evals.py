@@ -139,7 +139,7 @@ def test_load_fixtures_rejects_nonboolean_expected_value(tmp_path):
     )
     try:
         load_fixtures(path)
-    except ValueError as exc:
+    except TypeError as exc:
         assert "must be a boolean" in str(exc)
     else:
         raise AssertionError("non-boolean expected_allowed should fail")
