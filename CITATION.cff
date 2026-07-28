@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If Agent ProofChain supports your research or evaluation, cite the software and the exact commit or release used."
+title: "Agent ProofChain"
+type: software
+authors:
+  - name: "Jalen Builds Studio"
+    email: "contact@jalenbuilds.com"
+version: "0.1.0"
+license: MIT
+repository-code: "https://github.com/JalenBuildsHub/agent-proofchain"
+url: "https://github.com/JalenBuildsHub/agent-proofchain"
+abstract: >-
+  A provider-neutral admission and evidence layer for AI-agent systems, with
+  default-deny capability decisions, privacy-safe tamper-evident receipts,
+  synthetic evaluation, and runtime adapter contracts.
+keywords:
+  - artificial intelligence
+  - AI agents
+  - authorization
+  - audit receipts
+  - provenance
+  - prompt injection
+  - security evaluation
