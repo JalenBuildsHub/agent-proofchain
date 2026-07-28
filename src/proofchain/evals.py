@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
 import hashlib
 import json
+from collections import Counter, defaultdict
 from pathlib import Path
 from time import perf_counter_ns
 from typing import Any
@@ -178,10 +178,14 @@ def render_evaluation_markdown(report: dict[str, Any]) -> str:
         f"- Accuracy: **{summary['accuracy']:.3f}**",
         f"- False allows: **{summary['false_allows']}**",
         f"- False denies: **{summary['false_denies']}**",
-        f"- Allow precision / recall: **{render_ratio(metrics['allow_precision'])} / "
-        f"{render_ratio(metrics['allow_recall'])}**",
-        f"- Deny precision / recall: **{render_ratio(metrics['deny_precision'])} / "
-        f"{render_ratio(metrics['deny_recall'])}**",
+        (
+            f"- Allow precision / recall: **{render_ratio(metrics['allow_precision'])} / "
+            f"{render_ratio(metrics['allow_recall'])}**"
+        ),
+        (
+            f"- Deny precision / recall: **{render_ratio(metrics['deny_precision'])} / "
+            f"{render_ratio(metrics['deny_recall'])}**"
+        ),
         f"- Median / p95 latency: **{latency['median']} ns / {latency['p95']} ns**",
         "",
         "Timing is local process timing, not a service-level guarantee.",
@@ -214,18 +218,18 @@ def render_evaluation_markdown(report: dict[str, Any]) -> str:
 def load_fixtures(path: str | Path) -> list[dict[str, Any]]:
     value = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(value, list):
-        raise ValueError("Evaluation fixtures must be a JSON array")
+        raise TypeError("Evaluation fixtures must be a JSON array")
 
     seen_ids: set[str] = set()
     for index, fixture in enumerate(value, start=1):
         if not isinstance(fixture, dict):
-            raise ValueError(f"Fixture {index} must be an object")
+            raise TypeError(f"Fixture {index} must be an object")
         if "expected_allowed" not in fixture or "request" not in fixture:
             raise ValueError(f"Fixture {index} requires expected_allowed and request")
         if not isinstance(fixture["expected_allowed"], bool):
-            raise ValueError(f"Fixture {index} expected_allowed must be a boolean")
+            raise TypeError(f"Fixture {index} expected_allowed must be a boolean")
         if not isinstance(fixture["request"], dict):
-            raise ValueError(f"Fixture {index} request must be an object")
+            raise TypeError(f"Fixture {index} request must be an object")
 
         fixture_id = str(fixture.get("id") or f"fixture-{index}")
         if fixture_id in seen_ids:
@@ -235,5 +239,5 @@ def load_fixtures(path: str | Path) -> list[dict[str, Any]]:
         for field in ("expected_reason_codes", "forbidden_reason_codes"):
             codes = fixture.get(field, [])
             if not isinstance(codes, list) or not all(isinstance(item, str) for item in codes):
-                raise ValueError(f"Fixture {fixture_id} {field} must be a string array")
+                raise TypeError(f"Fixture {fixture_id} {field} must be a string array")
     return value
