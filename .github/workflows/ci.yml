@@ -30,7 +30,15 @@ jobs:
           pathlib.Path('artifacts').mkdir(exist_ok=True);
           pathlib.Path('artifacts/ruff.txt').write_text(result.stdout + result.stderr,
           encoding='utf-8'); print(result.stdout + result.stderr); sys.exit(result.returncode)"
-      - run: pytest
+      - name: Run pytest with retained diagnostics
+        id: pytest
+        continue-on-error: true
+        run: >-
+          python -c "import pathlib, subprocess, sys;
+          result = subprocess.run(['pytest'], text=True, capture_output=True);
+          pathlib.Path('artifacts').mkdir(exist_ok=True);
+          pathlib.Path('artifacts/pytest.txt').write_text(result.stdout + result.stderr,
+          encoding='utf-8'); print(result.stdout + result.stderr); sys.exit(result.returncode)"
       - run: python -m build
       - name: Generate v0.2 admission evaluation evidence
         run: >-
@@ -52,4 +60,7 @@ jobs:
           if-no-files-found: error
       - name: Enforce ruff result
         if: always() && steps.ruff.outcome == 'failure'
+        run: exit 1
+      - name: Enforce pytest result
+        if: always() && steps.pytest.outcome == 'failure'
         run: exit 1
