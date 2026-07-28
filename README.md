@@ -29,7 +29,8 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 proofchain evaluate --policy examples/policy.json --request examples/safe-request.json --ledger proofchain.db
 proofchain verify --ledger proofchain.db
-proofchain eval --policy examples/policy.json --fixtures evals/synthetic-v0.1.json --output eval-results.json
+proofchain eval --policy examples/policy.json --fixtures evals/synthetic-v0.2.json --output artifacts/eval-v0.2.json --markdown-output artifacts/eval-v0.2.md
+proofchain tamper-eval --output artifacts/tamper-v0.2.json --markdown-output artifacts/tamper-v0.2.md
 pytest
 ```
 
@@ -48,7 +49,29 @@ proofchain evaluate --policy examples/policy.json --request examples/injection-r
 - Caller-controlled request fields are not written to the ledger in plaintext.
 - Receipt rows form a SHA-256 hash chain that can be verified independently.
 - Synthetic evaluation fixtures cover spoofing, unauthorized mutation, injection, missing
-  model attribution, and ledger tampering.
+  model attribution, reason-code contracts, threshold boundaries, and ledger tampering.
+
+## v0.2 evaluation foundation
+
+The portable evaluation pilot currently includes:
+
+- a 40-case synthetic corpus grouped by identity, authorization, attribution, injection,
+  threshold-boundary, benign-security-language, and compound-policy categories;
+- allow and deny precision/recall, false-allow and false-deny rates, category summaries,
+  reason-code assertions, and local process latency measurements;
+- JSON and Markdown report output with a stable fixture digest;
+- deterministic ledger mutation tests, including an explicit demonstration that final-row
+  truncation cannot be detected without an external signed checkpoint;
+- provider-neutral adapter contracts for OpenAI, Anthropic, Google, and local runtimes.
+
+The named adapters are contracts, not provider SDK integrations. Hosts must authenticate
+actor identity, runtime family, model attribution, source, and provider request identity
+before constructing `AuthenticatedRuntimeContext`. Untrusted payloads may supply task intent,
+not trusted identity.
+
+Read [the v0.2 evaluation guide](docs/EVALUATION_V0_2.md) and
+[adapter contract](docs/ADAPTER_CONTRACT.md) before extending the benchmark or integrating
+a provider runtime.
 
 ## Non-goals
 
@@ -57,6 +80,7 @@ proofchain evaluate --policy examples/policy.json --request examples/injection-r
 - Guaranteed prompt-injection detection.
 - Autonomous approval of unknown workers.
 - Collection of private prompts or production incident transcripts.
+- Security certification based on synthetic benchmark accuracy.
 
 Read [the threat model](docs/THREAT_MODEL.md) and [limitations](docs/LIMITATIONS.md)
 before integrating this into a production agent system.
@@ -68,4 +92,5 @@ provider-neutral core without exposing private studio infrastructure.
 ## Project status
 
 `v0.1.0` is a local alpha foundation. The API may change before the first public release.
-See [ROADMAP.md](ROADMAP.md) and [GOVERNANCE.md](GOVERNANCE.md).
+The v0.2 evaluation work remains a pre-release pilot until independent fixtures and external
+review exist. See [ROADMAP.md](ROADMAP.md) and [GOVERNANCE.md](GOVERNANCE.md).
