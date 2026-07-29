@@ -1,0 +1,19 @@
+{
+  "claimed_actor": "nymrel-distribution-agent",
+  "actor_family": "distribution-drafter",
+  "runtime_family": "distribution-drafter",
+  "capability": "advisory",
+  "action": "create_postiz_draft_proposal",
+  "model": "host-verified-model-id",
+  "source": "nymrel-distribution-spine",
+  "content": {
+    "product_id": "goviral",
+    "campaign_id": "launch-001",
+    "revision_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "content_id": "content-001",
+    "channel": "linkedin",
+    "claim_ids": ["long-form-to-clips"],
+    "requested_effect": "draft-only",
+    "publish_authority_requested": false
+  }
+}
