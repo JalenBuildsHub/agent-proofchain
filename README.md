@@ -94,3 +94,5 @@ provider-neutral core without exposing private studio infrastructure.
 `v0.1.0` is a local alpha foundation. The API may change before the first public release.
 The v0.2 evaluation work remains a pre-release pilot until independent fixtures and external
 review exist. See [ROADMAP.md](ROADMAP.md) and [GOVERNANCE.md](GOVERNANCE.md).
+
+Built by [Nymrel](https://nymrel.com), a software studio that builds and runs its own products.
