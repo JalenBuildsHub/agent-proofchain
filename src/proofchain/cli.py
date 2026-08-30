@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
+import sys
+from collections.abc import Sequence
 from pathlib import Path
 
+from . import __version__
 from .admission import AdmissionRequest, evaluate
 from .evals import load_fixtures, render_evaluation_markdown, run_evaluation
 from .ledger import ReceiptLedger
@@ -19,8 +23,9 @@ def _write_text(path: str, content: str) -> None:
     target.write_text(content, encoding="utf-8")
 
 
-def main() -> int:
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="proofchain")
+    parser.add_argument("--version", action="version", version=f"proofchain {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     evaluate_parser = sub.add_parser("evaluate")
@@ -40,9 +45,10 @@ def main() -> int:
     tamper_parser = sub.add_parser("tamper-eval")
     tamper_parser.add_argument("--output")
     tamper_parser.add_argument("--markdown-output")
+    return parser
 
-    args = parser.parse_args()
 
+def _execute(args: argparse.Namespace) -> int:
     if args.command == "verify":
         ledger = ReceiptLedger(args.ledger)
         result = ledger.verify()
@@ -70,14 +76,24 @@ def main() -> int:
         return 0 if result["all_expected_outcomes_matched"] else 1
 
     policy = AdmissionPolicy.from_json(args.policy)
-    request = AdmissionRequest.from_dict(
-        json.loads(Path(args.request).read_text(encoding="utf-8"))
-    )
+    request = AdmissionRequest.from_dict(json.loads(Path(args.request).read_text(encoding="utf-8")))
     decision = evaluate(request, policy)
     ledger = ReceiptLedger(args.ledger)
     receipt = ledger.append(decision)
     print(json.dumps(receipt, indent=2, sort_keys=True))
     return 0 if decision.allowed else 2
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    try:
+        return _execute(args)
+    except (json.JSONDecodeError, OSError, sqlite3.Error, TypeError, ValueError):
+        print(
+            "proofchain: invalid input or unreadable ledger; no action was admitted",
+            file=sys.stderr,
+        )
+        return 2
 
 
 if __name__ == "__main__":

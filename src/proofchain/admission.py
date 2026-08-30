@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
-import time
 from dataclasses import dataclass
+from time import time_ns
 from typing import Any
 
 from .policy import AdmissionPolicy
@@ -23,17 +22,33 @@ class AdmissionRequest:
     content: Any = None
     source: str = "unspecified"
 
+    def __post_init__(self) -> None:
+        for field_name in (
+            "claimed_actor",
+            "actor_family",
+            "runtime_family",
+            "capability",
+            "action",
+            "source",
+        ):
+            if not isinstance(getattr(self, field_name), str):
+                raise TypeError(f"{field_name} must be a string")
+        if self.model is not None and not isinstance(self.model, str):
+            raise TypeError("model must be a string or null")
+
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> AdmissionRequest:
+        if not isinstance(value, dict):
+            raise TypeError("admission request must be a JSON object")
         return cls(
-            claimed_actor=str(value.get("claimed_actor", "")),
-            actor_family=str(value.get("actor_family", "unknown")),
-            runtime_family=str(value.get("runtime_family", "unknown")),
-            capability=str(value.get("capability", "mutation")),
-            action=str(value.get("action", "unknown")),
-            model=str(value["model"]) if value.get("model") else None,
+            claimed_actor=_request_text(value, "claimed_actor", ""),
+            actor_family=_request_text(value, "actor_family", "unknown"),
+            runtime_family=_request_text(value, "runtime_family", "unknown"),
+            capability=_request_text(value, "capability", ""),
+            action=_request_text(value, "action", ""),
+            model=_request_optional_text(value, "model"),
             content=value.get("content"),
-            source=str(value.get("source", "unspecified")),
+            source=_request_text(value, "source", "unspecified"),
         )
 
 
@@ -77,41 +92,66 @@ def _text_sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()
 
 
-def _content_text(content: Any) -> str:
+def _content_text(content: Any) -> tuple[str, bool]:
     if content is None:
-        return ""
+        return "", True
     if isinstance(content, str):
-        return content
-    return json.dumps(content, sort_keys=True, ensure_ascii=False, default=str)
+        return content, True
+    try:
+        return (
+            json.dumps(
+                content,
+                sort_keys=True,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                allow_nan=False,
+            ),
+            True,
+        )
+    except (TypeError, ValueError):
+        return "", False
 
 
 def evaluate(request: AdmissionRequest, policy: AdmissionPolicy) -> AdmissionDecision:
-    text = _content_text(request.content)
+    text, content_valid = _content_text(request.content)
     raw = text.encode("utf-8", errors="replace")
     content_hash = hashlib.sha256(raw).hexdigest()
-    request_id = f"pc-{int(time.time() * 1000):x}-{content_hash[:8]}"
+    request_id = f"pc-{time_ns():x}-{content_hash[:8]}"
     reasons: list[str] = []
 
     if not request.claimed_actor.strip():
         reasons.append("missing_claimed_actor")
-    if request.actor_family == "unknown" or request.runtime_family == "unknown":
+    if (
+        not request.actor_family.strip()
+        or not request.runtime_family.strip()
+        or request.actor_family.casefold() == "unknown"
+        or request.runtime_family.casefold() == "unknown"
+    ):
         reasons.append("unknown_identity_family")
     if request.actor_family != request.runtime_family:
         reasons.append("runtime_actor_family_mismatch")
+    if not request.capability.strip():
+        reasons.append("capability_unreported")
     if not policy.allows(request.actor_family, request.capability):
         reasons.append("capability_not_allowed")
+    if not request.action.strip():
+        reasons.append("action_unreported")
+    if not content_valid:
+        reasons.append("content_not_json_serializable")
     if len(raw) > policy.max_content_bytes:
         reasons.append("content_too_large")
-    if policy.model_required and not request.model:
+    if policy.model_required and (not request.model or not request.model.strip()):
         reasons.append("model_unreported")
+    if policy.source_required and (
+        not request.source.strip() or request.source.casefold() == "unspecified"
+    ):
+        reasons.append("source_unreported")
 
     matches: list[str] = []
-    for index, pattern in enumerate(policy.injection_indicators, start=1):
-        try:
-            if re.search(pattern, text, flags=re.IGNORECASE | re.DOTALL):
+    if content_valid and len(raw) <= policy.max_content_bytes:
+        for index, pattern in enumerate(policy.compiled_indicators, start=1):
+            if pattern.search(text):
                 matches.append(f"indicator_{index}")
-        except re.error:
-            reasons.append(f"invalid_policy_pattern:{index}")
     if len(matches) >= policy.injection_threshold:
         reasons.extend(matches)
         reasons.append("injection_threshold_met")
@@ -132,3 +172,19 @@ def evaluate(request: AdmissionRequest, policy: AdmissionPolicy) -> AdmissionDec
         model=request.model or "unreported",
         source=request.source,
     )
+
+
+def _request_text(value: dict[str, Any], field: str, default: str) -> str:
+    candidate = value.get(field, default)
+    if not isinstance(candidate, str):
+        raise TypeError(f"{field} must be a string")
+    return candidate
+
+
+def _request_optional_text(value: dict[str, Any], field: str) -> str | None:
+    candidate = value.get(field)
+    if candidate is None:
+        return None
+    if not isinstance(candidate, str):
+        raise TypeError(f"{field} must be a string or null")
+    return candidate

@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sqlite3
 
@@ -6,7 +7,15 @@ from proofchain import AdmissionPolicy, AdmissionRequest, ReceiptLedger, evaluat
 
 def decision():
     policy = AdmissionPolicy.from_dict({"actor_capabilities": {"builder": ["read"]}})
-    request = AdmissionRequest("agent-1", "builder", "builder", "read", "inspect", "model-v1")
+    request = AdmissionRequest(
+        "agent-1",
+        "builder",
+        "builder",
+        "read",
+        "inspect",
+        "model-v1",
+        source="unit-test",
+    )
     return evaluate(request, policy)
 
 
@@ -57,3 +66,75 @@ def test_ledger_never_persists_caller_metadata_plaintext(tmp_path):
     assert payload["source_sha256"]
     assert payload["action_sha256"]
     assert payload["claimed_actor_sha256"]
+
+
+def test_verify_fails_closed_when_receipts_table_is_removed(tmp_path):
+    path = tmp_path / "proof.db"
+    ledger = ReceiptLedger(path)
+    ledger.append(decision())
+    with sqlite3.connect(path) as conn:
+        conn.execute("DROP TABLE receipts")
+
+    result = ledger.verify()
+
+    assert result == {
+        "valid": False,
+        "receipts": 0,
+        "failure": "missing_receipts_table",
+    }
+    with sqlite3.connect(path) as conn:
+        table = conn.execute(
+            "SELECT name FROM sqlite_schema WHERE type = 'table' AND name = 'receipts'"
+        ).fetchone()
+    assert table is None
+
+
+def test_verify_rejects_non_contiguous_sequence(tmp_path):
+    path = tmp_path / "proof.db"
+    ledger = ReceiptLedger(path)
+    ledger.append(decision())
+    ledger.append(decision())
+    with sqlite3.connect(path) as conn:
+        conn.execute("UPDATE receipts SET sequence = 3 WHERE sequence = 2")
+
+    result = ledger.verify()
+
+    assert result["valid"] is False
+    assert result["failure"] == "non_contiguous_sequence"
+
+
+def test_verify_rejects_schema_without_receipt_hash_uniqueness(tmp_path):
+    path = tmp_path / "proof.db"
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            """CREATE TABLE receipts (
+                sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                payload_json TEXT NOT NULL,
+                previous_hash TEXT NOT NULL,
+                receipt_hash TEXT NOT NULL
+            )"""
+        )
+
+    result = ReceiptLedger(path).verify()
+
+    assert result["valid"] is False
+    assert result["failure"] == "invalid_receipts_schema"
+
+
+def test_verify_rejects_structurally_invalid_hashed_payload(tmp_path):
+    path = tmp_path / "proof.db"
+    ReceiptLedger(path).append(decision())
+    payload_json = json.dumps({"schema_version": 2}, sort_keys=True, separators=(",", ":"))
+    receipt_hash = hashlib.sha256(f"GENESIS\n{payload_json}".encode()).hexdigest()
+    with sqlite3.connect(path) as conn:
+        conn.execute("DELETE FROM receipts")
+        conn.execute(
+            "INSERT INTO receipts (sequence, payload_json, previous_hash, receipt_hash) "
+            "VALUES (1, ?, 'GENESIS', ?)",
+            (payload_json, receipt_hash),
+        )
+
+    result = ReceiptLedger(path).verify()
+
+    assert result["valid"] is False
+    assert result["failure"] == "invalid_receipt_payload"

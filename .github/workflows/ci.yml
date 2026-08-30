@@ -1,66 +1,199 @@
-name: ci
+name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
-  test:
+  quality:
+    name: Lint, types, tests, and branch coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Install the exact reviewed toolchain
+        # Exact project tools are intentional package inputs.
+        # zizmor: ignore[adhoc-packages]
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip==26.2.1
+          python -m pip install --disable-pip-version-check --no-deps -e .
+          python -m pip install --disable-pip-version-check +            pytest==9.1.1 ruff==0.16.5 mypy==2.3.1 coverage==7.16.0
+
+      - name: Run source and contract checks
+        run: |
+          python -c "from pathlib import Path; Path('artifacts').mkdir(exist_ok=True)"
+          python -m compileall -q src tests scripts
+          python -m ruff format --check .
+          python -m ruff check .
+          python -m mypy
+          python -m coverage run -m pytest --junitxml=artifacts/junit-quality.xml
+          python -m coverage xml -o artifacts/coverage.xml
+          python -m coverage report
+
+      - name: Retain quality evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: proofchain-quality-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 7
+
+  compatibility:
+    name: Python ${{ matrix.python-version }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.11", "3.13"]
-    runs-on: ${{ matrix.os }}
+        include:
+          - { os: ubuntu-24.04, python-version: '3.11' }
+          - { os: ubuntu-24.04, python-version: '3.12' }
+          - { os: ubuntu-24.04, python-version: '3.13' }
+          - { os: ubuntu-24.04, python-version: '3.14' }
+          - { os: windows-2025, python-version: '3.11' }
+          - { os: windows-2025, python-version: '3.14' }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -e ".[dev]"
-      - name: Run ruff with retained diagnostics
-        id: ruff
-        continue-on-error: true
-        run: >-
-          python -c "import pathlib, subprocess, sys;
-          result = subprocess.run(['ruff', 'check', '.'], text=True, capture_output=True);
-          pathlib.Path('artifacts').mkdir(exist_ok=True);
-          pathlib.Path('artifacts/ruff.txt').write_text(result.stdout + result.stderr,
-          encoding='utf-8'); print(result.stdout + result.stderr); sys.exit(result.returncode)"
-      - name: Run pytest with retained diagnostics
-        id: pytest
-        continue-on-error: true
-        run: >-
-          python -c "import pathlib, subprocess, sys;
-          result = subprocess.run(['pytest'], text=True, capture_output=True);
-          pathlib.Path('artifacts').mkdir(exist_ok=True);
-          pathlib.Path('artifacts/pytest.txt').write_text(result.stdout + result.stderr,
-          encoding='utf-8'); print(result.stdout + result.stderr); sys.exit(result.returncode)"
-      - run: python -m build
-      - name: Generate v0.2 admission evaluation evidence
-        run: >-
-          proofchain eval
-          --policy examples/policy.json
-          --fixtures evals/synthetic-v0.2.json
-          --output artifacts/eval-v0.2.json
-          --markdown-output artifacts/eval-v0.2.md
-      - name: Generate v0.2 tamper evaluation evidence
-        run: >-
-          proofchain tamper-eval
-          --output artifacts/tamper-v0.2.json
-          --markdown-output artifacts/tamper-v0.2.md
-      - uses: actions/upload-artifact@v4
+
+      - name: Install source and the exact test runner
+        # Exact project tools are intentional package inputs.
+        # zizmor: ignore[adhoc-packages]
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip==26.2.1
+          python -m pip install --disable-pip-version-check --no-deps -e .
+          python -m pip install --disable-pip-version-check pytest==9.1.1
+
+      - name: Run compatibility tests
+        run: |
+          python -c "from pathlib import Path; Path('artifacts').mkdir(exist_ok=True)"
+          python -m pytest --junitxml=artifacts/junit-${{ runner.os }}-py${{ matrix.python-version }}.xml
+
+      - name: Retain compatibility evidence
         if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: proofchain-evidence-${{ runner.os }}-py${{ matrix.python-version }}
+          name: proofchain-${{ runner.os }}-py${{ matrix.python-version }}-${{ github.sha }}
           path: artifacts/
           if-no-files-found: error
-      - name: Enforce ruff result
-        if: always() && steps.ruff.outcome == 'failure'
-        run: exit 1
-      - name: Enforce pytest result
-        if: always() && steps.pytest.outcome == 'failure'
-        run: exit 1
+          retention-days: 7
+
+  distribution:
+    name: Reproducible distribution consumer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Build and verify exactly one wheel and sdist
+        # Exact build tools are intentional release inputs.
+        # zizmor: ignore[adhoc-packages]
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip==26.2.1
+          python -m pip install --disable-pip-version-check build==1.6.0 twine==7.0.0
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          python -m build --outdir dist
+          python -m twine check dist/*
+          mkdir -p artifacts
+          python scripts/verify-release.py dist > artifacts/release-receipt.json
+
+      - name: Clean-install and exercise the wheel
+        # The just-built local wheel is an intentional ad hoc package input.
+        # zizmor: ignore[adhoc-packages]
+        shell: bash
+        run: |
+          mapfile -t wheels < <(find dist -maxdepth 1 -type f -name '*.whl' -print)
+          test "${#wheels[@]}" -eq 1
+          python -m venv "${RUNNER_TEMP}/proofchain-consumer"
+          "${RUNNER_TEMP}/proofchain-consumer/bin/python" -m pip install +            --disable-pip-version-check --no-deps "${wheels[0]}"
+          "${RUNNER_TEMP}/proofchain-consumer/bin/python" -m pip check
+          "${RUNNER_TEMP}/proofchain-consumer/bin/proofchain" --version
+          "${RUNNER_TEMP}/proofchain-consumer/bin/proofchain" evaluate +            --policy examples/policy.json +            --request examples/safe-request.json +            --ledger "${RUNNER_TEMP}/proofchain-consumer/receipt.db"
+          "${RUNNER_TEMP}/proofchain-consumer/bin/proofchain" verify +            --ledger "${RUNNER_TEMP}/proofchain-consumer/receipt.db"
+          "${RUNNER_TEMP}/proofchain-consumer/bin/proofchain" tamper-eval
+
+      - name: Upload verified distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: agent-proofchain-dist-${{ github.sha }}
+          path: |
+            dist/
+            artifacts/release-receipt.json
+          if-no-files-found: error
+          retention-days: 7
+
+  security:
+    name: Dependency, source, and workflow security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read # Allow Zizmor to resolve action metadata for annotations.
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Scan source and audit the reviewed environment
+        # Exact scanners are intentional security inputs.
+        # zizmor: ignore[adhoc-packages]
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip==26.2.1
+          python -m pip install --disable-pip-version-check --no-deps -e .
+          python -m pip install --disable-pip-version-check bandit==1.9.4 pip-audit==2.10.1
+          bandit -q -r src -ll -ii
+          pip-audit --strict .
+
+      - name: Audit GitHub Actions definitions
+        uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
+        with:
+          advanced-security: false
+          annotations: true
+          min-confidence: medium
+          min-severity: medium
+          online-audits: false
+          persona: auditor
+          version: 1.29.0

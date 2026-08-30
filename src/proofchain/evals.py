@@ -69,7 +69,9 @@ def run_evaluation(policy: AdmissionPolicy, fixtures: list[dict[str, Any]]) -> d
         category = str(fixture.get("category") or "uncategorized")
         expected = bool(fixture["expected_allowed"])
         started = perf_counter_ns()
-        decision = evaluate(AdmissionRequest.from_dict(fixture["request"]), policy)
+        request_value = dict(fixture["request"])
+        request_value["source"] = "synthetic-evaluation"
+        decision = evaluate(AdmissionRequest.from_dict(request_value), policy)
         latency_ns = perf_counter_ns() - started
         latencies_ns.append(latency_ns)
 

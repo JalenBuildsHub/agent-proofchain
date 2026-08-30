@@ -24,6 +24,9 @@ Google, local, and other model runtimes.
 
 ## Quick start
 
+Agent ProofChain supports maintained Python 3.11 through 3.14. The package is not currently
+published on PyPI, so install it from a reviewed source checkout:
+
 ```bash
 python -m venv .venv
 python -m pip install -e ".[dev]"
@@ -43,11 +46,16 @@ proofchain evaluate --policy examples/policy.json --request examples/injection-r
 ## Core guarantees
 
 - Default-deny capability policy.
+- Capability, action, model, and authenticated source attribution are required by default.
 - Claimed actor family must match the authenticated runtime family supplied by the host.
+- Provider adapters reject missing, non-string, or whitespace-ambiguous task intent instead of
+  inventing a mutation capability or unknown action.
 - Model, runtime, actor, capability, action, source, and content are recorded as
   SHA-256 digests alongside the decision and safe reason codes.
 - Caller-controlled request fields are not written to the ledger in plaintext.
 - Receipt rows form a SHA-256 hash chain that can be verified independently.
+- Verification opens an existing ledger read-only and fails closed when its receipt table or
+  required schema is missing; it never repairs evidence while checking it.
 - Synthetic evaluation fixtures cover spoofing, unauthorized mutation, injection, missing
   model attribution, reason-code contracts, threshold boundaries, and ledger tampering.
 
@@ -95,4 +103,9 @@ provider-neutral core without exposing private studio infrastructure.
 The v0.2 evaluation work remains a pre-release pilot until independent fixtures and external
 review exist. See [ROADMAP.md](ROADMAP.md) and [GOVERNANCE.md](GOVERNANCE.md).
 
-Built by [Nymrel](https://nymrel.com), a software studio that builds and runs its own products.
+The PyPI project, trusted publisher, hosted CI, GitHub release, and public-release outcomes remain
+unproven until their provider-side gates produce exact evidence. A successful source build is not
+publication proof.
+
+Built by [Nymrel](https://nymrel.com). We build and run products, services, websites, software,
+and apps.

@@ -7,6 +7,7 @@
   "injection_threshold": 2,
   "max_content_bytes": 200000,
   "model_required": true,
+  "source_required": true,
   "injection_indicators": [
     "ignore .*?(previous|prior|system|developer).*?(instructions|rules|policy)",
     "reveal|print|dump|exfiltrate|upload.*?(secret|token|credential|api key|password)",
@@ -16,4 +17,3 @@
     "override.*?(owner|lease|permission|policy)"
   ]
 }
-

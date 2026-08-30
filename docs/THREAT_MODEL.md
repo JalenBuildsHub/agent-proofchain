@@ -14,7 +14,9 @@
 3. An untrusted message instructs an agent to bypass policy or expose secrets.
 4. A worker omits the model or source used for an action.
 5. An attacker edits historical receipts to hide an unauthorized action.
-6. A trusted runtime is compromised after admission.
+6. An attacker removes or corrupts the receipt table and relies on verification to recreate it.
+7. A caller omits task intent and receives a permissive adapter default.
+8. A trusted runtime is compromised after admission.
 
 ## Controls in this package
 
@@ -22,8 +24,10 @@
 - Actor/runtime family equality requirement.
 - Combined-indicator injection detection.
 - Digest-based model/source attribution in every receipt.
+- Strict, non-empty provider task intent and authenticated source attribution.
 - SHA-256 digests instead of plaintext caller-controlled request fields.
 - Hash-chained SQLite receipts with deterministic verification.
+- Read-only verification that rejects missing or malformed receipt schemas.
 
 ## Required controls outside this package
 
@@ -32,3 +36,4 @@
 - Run untrusted agents under separate OS identities or containers.
 - Restrict each worker to an isolated worktree and explicit network policy.
 - Store signed receipt checkpoints outside the worker's administrative boundary.
+- Treat policy regexes as trusted configuration and review their complexity before adoption.
