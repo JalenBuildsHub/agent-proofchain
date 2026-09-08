@@ -1,10 +1,10 @@
 # Distribution Execution Receipts
 
-Agent ProofChain can append privacy-preserving evidence for one guarded social-distribution side effect to its existing SHA-256 receipt chain.
+Agent ProofChain can append privacy-preserving, host-supplied evidence about one guarded social-distribution side effect to its existing SHA-256 receipt chain. A receipt does not establish that an external side effect occurred.
 
-## What the receipt proves
+## What the receipt records
 
-A `DistributionExecutionReceipt` correlates:
+A `DistributionExecutionReceipt` records digests that correlate:
 
 - the Nymrel source event and exact product commit;
 - the AdFunnel idempotency key and brand;
@@ -16,6 +16,8 @@ A `DistributionExecutionReceipt` correlates:
 - the captured execution status.
 
 Caller-controlled identifiers are stored as SHA-256 correlation digests. Raw account IDs, brand IDs, source-event names, approval IDs, idempotency keys, and provider post IDs are not written to the public receipt payload.
+
+The library rejects missing correlation fields, unsupported statuses, and malformed SHA-256 evidence digests. Those structural checks do not authenticate the supplied values or a provider response.
 
 ## Required host controls
 

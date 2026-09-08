@@ -4,7 +4,13 @@ import sqlite3
 
 import pytest
 
-from proofchain import DistributionExecutionReceipt, ReceiptLedger
+from proofchain import (
+    AdmissionPolicy,
+    AdmissionRequest,
+    DistributionExecutionReceipt,
+    ReceiptLedger,
+    evaluate,
+)
 
 
 def distribution_receipt() -> DistributionExecutionReceipt:
@@ -79,14 +85,38 @@ def test_distribution_receipt_can_join_and_verify_existing_hash_chain(tmp_path):
     assert result["failed_sequence"] == 1
 
 
-def test_distribution_receipt_rejects_non_digest_evidence():
+def test_distribution_receipt_can_follow_an_admission_receipt(tmp_path):
+    ledger = ReceiptLedger(tmp_path / "proof.db")
+    policy = AdmissionPolicy.from_dict({"actor_capabilities": {"builder": ["read"]}})
+    decision = evaluate(
+        AdmissionRequest("agent-1", "builder", "builder", "read", "inspect", "model-v1"),
+        policy,
+    )
+
+    admission = ledger.append(decision)
+    distribution = ledger.append_payload(distribution_receipt().to_receipt())
+
+    assert distribution["previous_hash"] == admission["receipt_hash"]
+    assert ledger.verify()["receipts"] == 2
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("request_sha256", "not-a-digest", "request_sha256"),
+        ("permit_contract_digest", "g" * 64, "permit_contract_digest"),
+        ("status", "queued", "status"),
+        ("brand_id", "", "brand_id"),
+    ],
+)
+def test_distribution_receipt_rejects_invalid_evidence(field, value, message):
     receipt = distribution_receipt()
 
-    with pytest.raises(ValueError, match="request_sha256"):
+    with pytest.raises(ValueError, match=message):
         DistributionExecutionReceipt(
             **{
                 **receipt.__dict__,
-                "request_sha256": "not-a-digest",
+                field: value,
             }
         ).to_receipt()
 

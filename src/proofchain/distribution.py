@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
+import string
+from dataclasses import dataclass
 from typing import Any, Literal
-
 
 DistributionStatus = Literal[
     "draft_created",
@@ -15,9 +15,23 @@ DistributionStatus = Literal[
     "reconciled",
 ]
 
+_DISTRIBUTION_STATUSES = frozenset(
+    {"draft_created", "scheduled", "published", "failed", "reconciled"}
+)
+
 
 def _text_sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _require_text(name: str, value: str) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} is required")
+
+
+def _require_sha256(name: str, value: str) -> None:
+    if len(value) != 64 or any(character not in string.hexdigits for character in value):
+        raise ValueError(f"{name} must be a SHA-256 hex digest")
 
 
 @dataclass(frozen=True)
@@ -45,16 +59,22 @@ class DistributionExecutionReceipt:
     error_code: str | None = None
 
     def to_receipt(self) -> dict[str, Any]:
-        if not self.event_id:
-            raise ValueError("event_id is required")
-        if not self.idempotency_key:
-            raise ValueError("idempotency_key is required")
-        if len(self.request_sha256) != 64:
-            raise ValueError("request_sha256 must be a SHA-256 hex digest")
-        if len(self.permit_contract_digest) != 64:
-            raise ValueError("permit_contract_digest must be a SHA-256 hex digest")
-        if len(self.permit_decision_digest) != 64:
-            raise ValueError("permit_decision_digest must be a SHA-256 hex digest")
+        for name, value in (
+            ("event_id", self.event_id),
+            ("idempotency_key", self.idempotency_key),
+            ("brand_id", self.brand_id),
+            ("platform", self.platform),
+            ("integration_id", self.integration_id),
+            ("source_commit", self.source_commit),
+            ("approval_artifact_id", self.approval_artifact_id),
+            ("captured_at", self.captured_at),
+        ):
+            _require_text(name, value)
+        if self.status not in _DISTRIBUTION_STATUSES:
+            raise ValueError("status must be a supported distribution receipt status")
+        _require_sha256("request_sha256", self.request_sha256)
+        _require_sha256("permit_contract_digest", self.permit_contract_digest)
+        _require_sha256("permit_decision_digest", self.permit_decision_digest)
 
         return {
             "schema_version": 1,
