@@ -50,6 +50,9 @@ const forbiddenPlaintext = new Set([
 ]);
 
 function canonicalize(value) {
+  if (typeof value === "number" && !Number.isFinite(value)) {
+    throw new TypeError("payload must contain finite JSON values");
+  }
   if (Array.isArray(value)) {
     return value.map(canonicalize);
   }
@@ -180,7 +183,13 @@ export function verifyVector(document) {
     ) {
       return;
     }
-    const expectedHash = computeReceiptHash(previousHash, receipt.payload);
+    let expectedHash;
+    try {
+      expectedHash = computeReceiptHash(previousHash, receipt.payload);
+    } catch {
+      errors.push(`receipt ${expectedSequence}: payload must contain finite JSON values`);
+      return;
+    }
     if (receipt.receipt_hash !== expectedHash) {
       errors.push(`receipt ${expectedSequence}: receipt_hash mismatch`);
     }

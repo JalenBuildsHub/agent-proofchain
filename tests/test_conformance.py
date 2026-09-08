@@ -3,6 +3,8 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from proofchain.conformance import (
     compute_receipt_hash,
     load_vector,
@@ -102,5 +104,62 @@ def test_malformed_payload_matches_javascript_chain_progression(tmp_path: Path):
     )
     assert completed.returncode == 1
     observed = json.loads(completed.stdout)
+    assert observed["last_hash"] == expected["last_hash"]
+    assert observed["errors"] == expected["errors"]
+
+
+@pytest.mark.parametrize("decision", [[], {}])
+def test_unhashable_decision_is_invalid_in_both_verifiers(decision, tmp_path: Path):
+    vector = copy.deepcopy(load_vector(VECTOR_PATH))
+    vector["receipts"][0]["payload"]["decision"] = decision
+    expected = verify_receipt_chain_vector(vector)
+    vector_path = tmp_path / "invalid-decision.json"
+    vector_path.write_text(json.dumps(vector), encoding="utf-8")
+    completed = subprocess.run(
+        ["node", "examples/verify_receipt_vector.mjs", str(vector_path)],
+        text=True, capture_output=True, check=False,
+    )
+    assert completed.returncode == 1
+    observed = json.loads(completed.stdout)
+    assert observed["valid"] is expected["valid"] is False
+    assert observed["last_hash"] == expected["last_hash"]
+
+
+@pytest.mark.parametrize("field", ["schema_version", "sequence"])
+def test_boolean_cannot_stand_in_for_vector_integer(field, tmp_path: Path):
+    vector = copy.deepcopy(load_vector(VECTOR_PATH))
+    target = vector if field == "schema_version" else vector["receipts"][0]
+    target[field] = True
+    expected = verify_receipt_chain_vector(vector)
+    vector_path = tmp_path / "invalid-integer.json"
+    vector_path.write_text(json.dumps(vector), encoding="utf-8")
+    completed = subprocess.run(
+        ["node", "examples/verify_receipt_vector.mjs", str(vector_path)],
+        text=True, capture_output=True, check=False,
+    )
+    assert completed.returncode == 1
+    assert json.loads(completed.stdout)["valid"] is expected["valid"] is False
+
+
+@pytest.mark.parametrize("number", ["NaN", "Infinity", "-Infinity"])
+def test_nonfinite_payload_is_rejected_without_advancing_either_chain(number):
+    vector = copy.deepcopy(load_vector(VECTOR_PATH))
+    vector["receipts"][0]["payload"]["extra"] = float(number)
+    with pytest.raises(ValueError):
+        compute_receipt_hash("GENESIS", vector["receipts"][0]["payload"])
+    expected = verify_receipt_chain_vector(vector)
+    script = """
+import { readFileSync } from 'node:fs';
+import { verifyVector } from './examples/verify_receipt_vector.mjs';
+const vector = JSON.parse(readFileSync('spec/vectors/receipt-chain-v2.json', 'utf8'));
+vector.receipts[0].payload.extra = Number(process.argv[1]);
+console.log(JSON.stringify(verifyVector(vector)));
+"""
+    completed = subprocess.run(
+        ["node", "--input-type=module", "-e", script, "--", number],
+        text=True, capture_output=True, check=True,
+    )
+    observed = json.loads(completed.stdout)
+    assert observed["valid"] is expected["valid"] is False
     assert observed["last_hash"] == expected["last_hash"]
     assert observed["errors"] == expected["errors"]

@@ -50,7 +50,9 @@ PLAINTEXT_CALLER_FIELDS = {
 def canonical_payload_json(payload: dict[str, Any]) -> str:
     """Return the canonical JSON representation used by receipt-chain hashing."""
 
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+    )
 
 
 def compute_receipt_hash(previous_hash: str, payload: dict[str, Any]) -> str:
@@ -96,9 +98,9 @@ def validate_receipt_v2(payload: Any, sequence: int) -> list[str]:
     decision = payload.get("decision")
     if type(allowed) is not bool:
         errors.append(f"receipt {sequence}: allowed must be a boolean")
-    if decision not in {"allow", "deny"}:
+    if not isinstance(decision, str) or decision not in {"allow", "deny"}:
         errors.append(f"receipt {sequence}: decision must be allow or deny")
-    if type(allowed) is bool and decision in {"allow", "deny"}:
+    if type(allowed) is bool and isinstance(decision, str) and decision in {"allow", "deny"}:
         expected = "allow" if allowed else "deny"
         if decision != expected:
             errors.append(
@@ -130,7 +132,7 @@ def verify_receipt_chain_vector(document: Any) -> dict[str, Any]:
         }
 
     errors: list[str] = []
-    if document.get("schema_version") != 1:
+    if type(document.get("schema_version")) is bool or document.get("schema_version") != 1:
         errors.append("vector schema_version must equal 1")
     if document.get("genesis") != "GENESIS":
         errors.append("vector genesis must equal GENESIS")
@@ -151,7 +153,7 @@ def verify_receipt_chain_vector(document: Any) -> dict[str, Any]:
             continue
 
         sequence = receipt.get("sequence")
-        if sequence != expected_sequence:
+        if type(sequence) is bool or sequence != expected_sequence:
             errors.append(
                 f"receipt {expected_sequence}: sequence must equal {expected_sequence}, got {sequence!r}"
             )
@@ -171,7 +173,11 @@ def verify_receipt_chain_vector(document: Any) -> dict[str, Any]:
                 f"receipt {expected_sequence}: receipt_hash must be a lowercase SHA-256 hex digest"
             )
         if isinstance(payload, dict):
-            expected_hash = compute_receipt_hash(previous_hash, payload)
+            try:
+                expected_hash = compute_receipt_hash(previous_hash, payload)
+            except (ValueError, TypeError):
+                errors.append(f"receipt {expected_sequence}: payload must contain finite JSON values")
+                continue
             if observed_hash != expected_hash:
                 errors.append(f"receipt {expected_sequence}: receipt_hash mismatch")
             previous_hash = expected_hash
