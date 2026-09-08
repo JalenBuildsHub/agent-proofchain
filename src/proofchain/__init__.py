@@ -12,6 +12,7 @@ from .adapters import (
     RuntimeAdapter,
 )
 from .admission import AdmissionDecision, AdmissionRequest, evaluate
+from .distribution import DistributionExecutionReceipt, DistributionStatus
 from .ledger import ReceiptLedger
 from .policy import AdmissionPolicy
 
@@ -22,6 +23,8 @@ __all__ = [
     "AdmissionRequest",
     "AnthropicAdapter",
     "AuthenticatedRuntimeContext",
+    "DistributionExecutionReceipt",
+    "DistributionStatus",
     "GoogleAdapter",
     "LocalRuntimeAdapter",
     "MappingRuntimeAdapter",
