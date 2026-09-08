@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-import string
+import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -18,6 +19,7 @@ DistributionStatus = Literal[
 _DISTRIBUTION_STATUSES = frozenset(
     {"draft_created", "scheduled", "published", "failed", "reconciled"}
 )
+_SHA256_HEX = re.compile(r"[0-9a-f]{64}\Z")
 
 
 def _text_sha256(value: str) -> str:
@@ -29,9 +31,19 @@ def _require_text(name: str, value: str) -> None:
         raise ValueError(f"{name} is required")
 
 
-def _require_sha256(name: str, value: str) -> None:
-    if len(value) != 64 or any(character not in string.hexdigits for character in value):
+def _require_sha256(name: str, value: object) -> None:
+    if not isinstance(value, str) or _SHA256_HEX.fullmatch(value) is None:
         raise ValueError(f"{name} must be a SHA-256 hex digest")
+
+
+def _require_provider_post_ids(value: object, status: DistributionStatus) -> Sequence[str]:
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise TypeError("provider_post_ids must be a sequence of non-empty strings")
+    if any(not isinstance(post_id, str) or not post_id.strip() for post_id in value):
+        raise ValueError("provider_post_ids must contain only non-empty strings")
+    if status in {"published", "reconciled"} and not value:
+        raise ValueError(f"provider_post_ids are required for {status} receipts")
+    return value
 
 
 @dataclass(frozen=True)
@@ -75,6 +87,7 @@ class DistributionExecutionReceipt:
         _require_sha256("request_sha256", self.request_sha256)
         _require_sha256("permit_contract_digest", self.permit_contract_digest)
         _require_sha256("permit_decision_digest", self.permit_decision_digest)
+        provider_post_ids = _require_provider_post_ids(self.provider_post_ids, self.status)
 
         return {
             "schema_version": 1,
@@ -92,8 +105,7 @@ class DistributionExecutionReceipt:
             "status": self.status,
             "captured_at": self.captured_at,
             "provider_post_id_sha256": [
-                _text_sha256(provider_post_id)
-                for provider_post_id in self.provider_post_ids
+                _text_sha256(provider_post_id) for provider_post_id in provider_post_ids
             ],
             "error_code": self.error_code,
         }

@@ -1,6 +1,8 @@
 import json
 import sqlite3
 
+import pytest
+
 from proofchain import AdmissionPolicy, AdmissionRequest, ReceiptLedger, evaluate
 
 
@@ -57,3 +59,22 @@ def test_ledger_never_persists_caller_metadata_plaintext(tmp_path):
     assert payload["source_sha256"]
     assert payload["action_sha256"]
     assert payload["claimed_actor_sha256"]
+
+
+@pytest.mark.parametrize("field", ["sequence", "previous_hash", "receipt_hash"])
+def test_ledger_rejects_reserved_metadata_fields(tmp_path, field):
+    ledger = ReceiptLedger(tmp_path / "proof.db")
+
+    with pytest.raises(ValueError, match="reserved ledger fields"):
+        ledger.append_payload({"schema_version": 1, field: "forged"})
+
+
+def test_failed_serialization_does_not_block_following_valid_append(tmp_path):
+    ledger = ReceiptLedger(tmp_path / "proof.db")
+
+    with pytest.raises(TypeError):
+        ledger.append_payload({"schema_version": 1, "not_json": object()})
+
+    appended = ledger.append_payload({"schema_version": 1, "receipt_type": "valid"})
+    assert appended["sequence"] == 1
+    assert ledger.verify()["valid"] is True

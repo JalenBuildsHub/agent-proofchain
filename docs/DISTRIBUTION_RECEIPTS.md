@@ -17,7 +17,9 @@ A `DistributionExecutionReceipt` records digests that correlate:
 
 Caller-controlled identifiers are stored as SHA-256 correlation digests. Raw account IDs, brand IDs, source-event names, approval IDs, idempotency keys, and provider post IDs are not written to the public receipt payload.
 
-The library rejects missing correlation fields, unsupported statuses, and malformed SHA-256 evidence digests. Those structural checks do not authenticate the supplied values or a provider response.
+The library rejects missing correlation fields, unsupported statuses, malformed lowercase SHA-256 evidence digests, and empty or non-string provider post IDs. Published and reconciled receipts require at least one provider post ID. Those structural checks do not authenticate the supplied values or a provider response.
+
+Ledger payloads use sorted-key compact JSON with literal UTF-8 text before hashing. Ledger-generated `sequence`, `previous_hash`, and `receipt_hash` fields are reserved and cannot be supplied by callers.
 
 ## Required host controls
 

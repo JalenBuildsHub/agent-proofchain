@@ -11,6 +11,7 @@ from proofchain import (
     ReceiptLedger,
     evaluate,
 )
+from proofchain.canonical import canonical_json
 
 
 def distribution_receipt() -> DistributionExecutionReceipt:
@@ -49,9 +50,7 @@ def test_distribution_receipt_hashes_caller_controlled_identifiers():
 
     assert payload["receipt_type"] == "distribution_execution"
     assert payload["schema_version"] == 1
-    assert payload["event_id_sha256"] == hashlib.sha256(
-        receipt.event_id.encode()
-    ).hexdigest()
+    assert payload["event_id_sha256"] == hashlib.sha256(receipt.event_id.encode()).hexdigest()
     assert payload["provider_post_id_sha256"] == [
         hashlib.sha256(receipt.provider_post_ids[0].encode()).hexdigest()
     ]
@@ -100,11 +99,33 @@ def test_distribution_receipt_can_follow_an_admission_receipt(tmp_path):
     assert ledger.verify()["receipts"] == 2
 
 
+def test_mixed_unicode_admission_and_distribution_receipts_use_canonical_utf8(tmp_path):
+    ledger = ReceiptLedger(tmp_path / "proof.db")
+    policy = AdmissionPolicy.from_dict({"actor_capabilities": {"builder": ["read"]}})
+    decision = evaluate(
+        AdmissionRequest("agent-\u00e9", "builder", "builder", "read", "inspect", "model-v1"),
+        policy,
+    )
+    admission = ledger.append(decision)
+    payload = {
+        **distribution_receipt().__dict__,
+        "status": "failed",
+        "error_code": "\u00e9chec-\u2705",
+    }
+    distribution = ledger.append_payload(DistributionExecutionReceipt(**payload).to_receipt())
+
+    expected_payload = canonical_json(DistributionExecutionReceipt(**payload).to_receipt())
+    assert "\u00e9chec-\u2705" in expected_payload
+    assert distribution["previous_hash"] == admission["receipt_hash"]
+    assert ledger.verify()["valid"] is True
+
+
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
         ("request_sha256", "not-a-digest", "request_sha256"),
         ("permit_contract_digest", "g" * 64, "permit_contract_digest"),
+        ("permit_decision_digest", "A" * 64, "permit_decision_digest"),
         ("status", "queued", "status"),
         ("brand_id", "", "brand_id"),
     ],
@@ -126,3 +147,23 @@ def test_generic_ledger_rejects_unschematized_payload(tmp_path):
 
     with pytest.raises(ValueError, match="schema_version"):
         ledger.append_payload({"receipt_type": "distribution_execution"})
+
+
+@pytest.mark.parametrize("provider_post_ids", [("",), (" ",), (1,), "post-123"])
+def test_distribution_receipt_rejects_invalid_provider_post_ids(provider_post_ids):
+    receipt = distribution_receipt()
+
+    with pytest.raises((TypeError, ValueError), match="provider_post_ids"):
+        DistributionExecutionReceipt(
+            **{**receipt.__dict__, "provider_post_ids": provider_post_ids}
+        ).to_receipt()
+
+
+@pytest.mark.parametrize("status", ["published", "reconciled"])
+def test_distribution_receipt_requires_provider_post_ids_for_terminal_success(status):
+    receipt = distribution_receipt()
+
+    with pytest.raises(ValueError, match="provider_post_ids"):
+        DistributionExecutionReceipt(
+            **{**receipt.__dict__, "status": status, "provider_post_ids": ()}
+        ).to_receipt()
