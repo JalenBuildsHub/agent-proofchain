@@ -61,7 +61,7 @@ jobs:
           python -m build --outdir release
           python -m twine check release/*
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            python scripts/verify-release.py release --tag "${GITHUB_REF_NAME}" +              > release-receipt.json
+            python scripts/verify-release.py release --tag "${GITHUB_REF_NAME}" > release-receipt.json
           else
             python scripts/verify-release.py release > release-receipt.json
           fi
@@ -143,4 +143,4 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         shell: bash
         run: |
-          gh release create "${RELEASE_TAG}" candidate/release/* candidate/release-receipt.json +            --repo "${GITHUB_REPOSITORY}" +            --verify-tag +            --generate-notes
+          gh release create "${RELEASE_TAG}" candidate/release/* candidate/release-receipt.json --repo "${GITHUB_REPOSITORY}" --verify-tag --generate-notes
