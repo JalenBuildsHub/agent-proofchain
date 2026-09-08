@@ -48,6 +48,16 @@ jobs:
           pathlib.Path('artifacts').mkdir(exist_ok=True);
           pathlib.Path('artifacts/demo.json').write_text(
           json.dumps(run_demo(), indent=2, sort_keys=True) + '\n', encoding='utf-8')"
+      - name: Verify portable receipt conformance vector in Python
+        run: >-
+          proofchain conformance
+          --vector spec/vectors/receipt-chain-v2.json
+          --output artifacts/conformance-python-v1.json
+      - name: Verify portable receipt conformance vector in JavaScript
+        run: >-
+          node examples/verify_receipt_vector.mjs
+          spec/vectors/receipt-chain-v2.json
+          > artifacts/conformance-javascript-v1.json
       - name: Generate v0.2 admission evaluation evidence
         run: >-
           proofchain eval

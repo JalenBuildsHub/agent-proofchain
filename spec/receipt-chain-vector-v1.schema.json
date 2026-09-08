@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JalenBuildsHub/agent-proofchain/spec/receipt-chain-vector-v1.schema.json",
+  "title": "Agent ProofChain receipt-chain conformance vector v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "specification",
+    "hash_algorithm",
+    "canonical_json",
+    "genesis",
+    "receipts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "specification": {
+      "const": "agent-proofchain-receipt-chain-vector-v1"
+    },
+    "hash_algorithm": {
+      "const": "sha256(previous_hash + newline + canonical_json(payload))"
+    },
+    "canonical_json": {
+      "type": "string",
+      "minLength": 1
+    },
+    "genesis": {
+      "const": "GENESIS"
+    },
+    "receipts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/vectorReceipt"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "vectorReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "payload",
+        "previous_hash",
+        "receipt_hash"
+      ],
+      "properties": {
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "payload": {
+          "$ref": "receipt-v2.schema.json"
+        },
+        "previous_hash": {
+          "oneOf": [
+            {
+              "const": "GENESIS"
+            },
+            {
+              "$ref": "#/$defs/sha256"
+            }
+          ]
+        },
+        "receipt_hash": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

@@ -13,6 +13,13 @@ from .adapters import (
 )
 from .admission import AdmissionDecision, AdmissionRequest, evaluate
 from .distribution import DistributionExecutionReceipt, DistributionStatus
+from .conformance import (
+    canonical_payload_json,
+    compute_receipt_hash,
+    load_vector,
+    validate_receipt_v2,
+    verify_receipt_chain_vector,
+)
 from .ledger import ReceiptLedger
 from .policy import AdmissionPolicy
 
@@ -31,6 +38,11 @@ __all__ = [
     "NormalizedRuntimeRequest",
     "OpenAIAdapter",
     "ReceiptLedger",
+    "canonical_payload_json",
+    "compute_receipt_hash",
+    "load_vector",
+    "validate_receipt_v2",
+    "verify_receipt_chain_vector",
     "RuntimeAdapter",
     "evaluate",
 ]

@@ -24,3 +24,5 @@
 - Added structured bug, feature, and independent-fixture contribution forms.
 - Added pull-request guidance, Dependabot configuration, typed-package metadata, and pinned
   OpenSSF Scorecard analysis.
+
+- Added draft portable receipt-v2 schemas, canonical cross-language hash-chain conformance vectors, and Python/JavaScript verification commands.
