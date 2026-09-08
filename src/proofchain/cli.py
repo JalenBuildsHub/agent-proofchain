@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from .admission import AdmissionRequest, evaluate
+from .demo import render_demo, run_demo
 from .evals import load_fixtures, render_evaluation_markdown, run_evaluation
 from .ledger import ReceiptLedger
 from .policy import AdmissionPolicy
@@ -22,6 +23,9 @@ def _write_text(path: str, content: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(prog="proofchain")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    demo_parser = sub.add_parser("demo", help="run a network-free end-to-end demonstration")
+    demo_parser.add_argument("--json", action="store_true", dest="as_json")
 
     evaluate_parser = sub.add_parser("evaluate")
     evaluate_parser.add_argument("--policy", required=True)
@@ -42,6 +46,11 @@ def main() -> int:
     tamper_parser.add_argument("--markdown-output")
 
     args = parser.parse_args()
+
+    if args.command == "demo":
+        result = run_demo()
+        print(json.dumps(result, indent=2, sort_keys=True) if args.as_json else render_demo(result))
+        return 0
 
     if args.command == "verify":
         ledger = ReceiptLedger(args.ledger)

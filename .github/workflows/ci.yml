@@ -40,6 +40,14 @@ jobs:
           pathlib.Path('artifacts/pytest.txt').write_text(result.stdout + result.stderr,
           encoding='utf-8'); print(result.stdout + result.stderr); sys.exit(result.returncode)"
       - run: python -m build
+      - name: Run one-command demo
+        run: proofchain demo
+      - name: Save demo evidence
+        run: >-
+          python -c "import json, pathlib; from proofchain.demo import run_demo;
+          pathlib.Path('artifacts').mkdir(exist_ok=True);
+          pathlib.Path('artifacts/demo.json').write_text(
+          json.dumps(run_demo(), indent=2, sort_keys=True) + '\n', encoding='utf-8')"
       - name: Generate v0.2 admission evaluation evidence
         run: >-
           proofchain eval

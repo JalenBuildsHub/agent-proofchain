@@ -18,3 +18,9 @@
 - Added provider-neutral OpenAI, Anthropic, Google, and local-runtime adapter contracts bound
   to host-authenticated identity and attribution context.
 - Added cross-platform CI evidence-artifact generation for the v0.2 evaluation pilot.
+- Added a network-free `proofchain demo` covering admission, receipts, verification, evaluation,
+  and tamper limits.
+- Added architecture, vision, adoption, support, citation, and logs-versus-receipts documentation.
+- Added structured bug, feature, and independent-fixture contribution forms.
+- Added pull-request guidance, Dependabot configuration, typed-package metadata, and pinned
+  OpenSSF Scorecard analysis.
