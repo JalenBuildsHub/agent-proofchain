@@ -1,0 +1,56 @@
+name: Feature or design proposal
+description: Propose a scoped improvement to the open core
+title: "[Proposal]: "
+labels: ["proposal", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What concrete trust, evidence, privacy, portability, or evaluation problem exists?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe observable behavior rather than implementation preference.
+    validations:
+      required: true
+  - type: dropdown
+    id: boundary
+    attributes:
+      label: Primary trust boundary
+      options:
+        - Authenticated runtime context
+        - Capability policy
+        - Injection indicators
+        - Receipt schema or hashing
+        - Ledger verification
+        - Evaluation methodology
+        - Provider adapter
+        - CLI or packaging
+        - Documentation or community
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Proposed design
+      description: Include alternatives and why this belongs in the narrow open core.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and non-goals
+      description: Address privacy, compatibility, false confidence, and scope growth.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Acceptance evidence
+      description: Which tests, fixtures, conformance checks, or receipts would demonstrate success?
+    validations:
+      required: true

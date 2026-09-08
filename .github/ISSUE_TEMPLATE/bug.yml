@@ -1,0 +1,72 @@
+name: Bug report
+description: Report a reproducible defect in admission, receipts, evaluation, or portability
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use synthetic data only. Do not include secrets, private prompts, customer data, internal paths, or undisclosed vulnerability details.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Admission decision
+        - Receipt ledger
+        - Verification
+        - Evaluation fixtures or metrics
+        - Runtime adapter
+        - CLI
+        - Packaging or installation
+        - Cross-platform behavior
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, and installation method.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal synthetic reproduction
+      description: Include commands or a small synthetic code sample.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Privacy-safe evidence
+      description: Reason codes, hashes, stack traces, or generated reports with private values removed.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checks
+      options:
+        - label: I used synthetic data and removed secrets, private prompts, customer data, and internal paths.
+          required: true
+        - label: This is not an undisclosed security vulnerability requiring private reporting.
+          required: true

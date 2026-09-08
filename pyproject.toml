@@ -9,17 +9,36 @@ description = "Provider-neutral admission decisions and tamper-evident action re
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-authors = [{ name = "Jalen Builds Studio", email = "contact@jalenbuilds.com" }]
-keywords = ["ai-agents", "security", "audit", "prompt-injection", "provenance"]
+authors = [{ name = "Nymrel", email = "contact@nymrel.com" }]
+keywords = [
+  "ai-agents",
+  "agent-security",
+  "authorization",
+  "audit-receipts",
+  "prompt-injection",
+  "provenance",
+  "tamper-evidence",
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Security",
   "Topic :: Software Development :: Quality Assurance",
+  "Typing :: Typed",
 ]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/nymrel/agent-proofchain"
+Documentation = "https://github.com/nymrel/agent-proofchain#readme"
+Repository = "https://github.com/nymrel/agent-proofchain"
+Issues = "https://github.com/nymrel/agent-proofchain/issues"
+Changelog = "https://github.com/nymrel/agent-proofchain/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3", "ruff>=0.9", "build>=1.2"]
@@ -36,4 +55,3 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-

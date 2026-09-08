@@ -1,0 +1,70 @@
+name: action smoke
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-action:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run local Agent ProofChain action
+        id: proofchain
+        uses: ./
+        with:
+          python-version: "3.13"
+          output-directory: proofchain-action-evidence
+
+      - name: Validate action evidence and outputs
+        shell: bash
+        env:
+          EVIDENCE_DIRECTORY: ${{ steps.proofchain.outputs.evidence-directory }}
+          CONFORMANCE_VALID: ${{ steps.proofchain.outputs.conformance-valid }}
+          CHAIN_HEAD: ${{ steps.proofchain.outputs.chain-head }}
+          FIXTURE_SHA256: ${{ steps.proofchain.outputs.fixture-sha256 }}
+          EVALUATION_CORRECT: ${{ steps.proofchain.outputs.evaluation-correct }}
+          EVALUATION_TOTAL: ${{ steps.proofchain.outputs.evaluation-total }}
+          FALSE_ALLOWS: ${{ steps.proofchain.outputs.false-allows }}
+          FALSE_DENIES: ${{ steps.proofchain.outputs.false-denies }}
+          TAMPER_MATCHED: ${{ steps.proofchain.outputs.tamper-matched }}
+          TAMPER_TOTAL: ${{ steps.proofchain.outputs.tamper-total }}
+        run: >-
+          python -c "import json, os, pathlib, re;
+          root = pathlib.Path(os.environ['EVIDENCE_DIRECTORY']);
+          required = ['demo.json', 'conformance.json', 'evaluation.json', 'evaluation.md',
+          'tamper.json', 'tamper.md'];
+          missing = [name for name in required if not (root / name).is_file()];
+          assert not missing, missing;
+          conformance = json.loads((root / 'conformance.json').read_text(encoding='utf-8'));
+          evaluation = json.loads((root / 'evaluation.json').read_text(encoding='utf-8'));
+          tamper = json.loads((root / 'tamper.json').read_text(encoding='utf-8'));
+          assert conformance['valid'];
+          assert os.environ['CONFORMANCE_VALID'] == 'true';
+          assert os.environ['CHAIN_HEAD'] == conformance['last_hash'];
+          assert re.fullmatch(r'[0-9a-f]{64}', os.environ['CHAIN_HEAD']);
+          assert os.environ['FIXTURE_SHA256'] == evaluation['benchmark']['fixture_sha256'];
+          assert int(os.environ['EVALUATION_CORRECT']) == evaluation['summary']['correct'];
+          assert int(os.environ['EVALUATION_TOTAL']) == evaluation['summary']['total'];
+          assert int(os.environ['FALSE_ALLOWS']) == 0;
+          assert int(os.environ['FALSE_DENIES']) == 0;
+          assert int(os.environ['TAMPER_MATCHED']) == tamper['matched'];
+          assert int(os.environ['TAMPER_TOTAL']) == tamper['scenario_count'];
+          assert tamper['all_expected_outcomes_matched']"
+
+      - name: Upload action evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: proofchain-action-${{ runner.os }}
+          path: proofchain-action-evidence/
+          if-no-files-found: error
