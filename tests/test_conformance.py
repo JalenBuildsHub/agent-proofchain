@@ -65,7 +65,9 @@ def test_plaintext_caller_metadata_is_rejected():
     result = verify_receipt_chain_vector(vector)
 
     assert result["valid"] is False
-    assert any("caller-controlled plaintext fields are forbidden" in item for item in result["errors"])
+    assert any(
+        "caller-controlled plaintext fields are forbidden" in item for item in result["errors"]
+    )
     assert any("unknown fields: claimed_actor" in item for item in result["errors"])
 
 
@@ -117,7 +119,9 @@ def test_unhashable_decision_is_invalid_in_both_verifiers(decision, tmp_path: Pa
     vector_path.write_text(json.dumps(vector), encoding="utf-8")
     completed = subprocess.run(
         ["node", "examples/verify_receipt_vector.mjs", str(vector_path)],
-        text=True, capture_output=True, check=False,
+        text=True,
+        capture_output=True,
+        check=False,
     )
     assert completed.returncode == 1
     observed = json.loads(completed.stdout)
@@ -135,7 +139,9 @@ def test_boolean_cannot_stand_in_for_vector_integer(field, tmp_path: Path):
     vector_path.write_text(json.dumps(vector), encoding="utf-8")
     completed = subprocess.run(
         ["node", "examples/verify_receipt_vector.mjs", str(vector_path)],
-        text=True, capture_output=True, check=False,
+        text=True,
+        capture_output=True,
+        check=False,
     )
     assert completed.returncode == 1
     assert json.loads(completed.stdout)["valid"] is expected["valid"] is False
@@ -157,7 +163,9 @@ console.log(JSON.stringify(verifyVector(vector)));
 """
     completed = subprocess.run(
         ["node", "--input-type=module", "-e", script, "--", number],
-        text=True, capture_output=True, check=True,
+        text=True,
+        capture_output=True,
+        check=True,
     )
     observed = json.loads(completed.stdout)
     assert observed["valid"] is expected["valid"] is False

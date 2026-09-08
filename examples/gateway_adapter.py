@@ -35,7 +35,9 @@ def authenticate_transport(headers: dict[str, str]) -> AuthenticatedRuntimeConte
     )
 
 
-def admit(payload: dict[str, Any], headers: dict[str, str], ledger_path: str | Path) -> dict[str, Any]:
+def admit(
+    payload: dict[str, Any], headers: dict[str, str], ledger_path: str | Path
+) -> dict[str, Any]:
     context = authenticate_transport(headers)
     normalized = OpenAIAdapter().normalize(payload, context)
     policy = AdmissionPolicy.from_dict(

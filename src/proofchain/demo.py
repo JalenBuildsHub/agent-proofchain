@@ -187,7 +187,8 @@ def render_demo(report: dict[str, Any]) -> str:
             "Agent ProofChain demo",
             "=====================",
             f"ALLOW  safe read request: {str(safe['allowed']).lower()}",
-            f"DENY   unauthorized + injection-shaped mutation: {str(not denied['allowed']).lower()}",
+            "DENY   unauthorized + injection-shaped mutation: "
+            f"{str(not denied['allowed']).lower()}",
             f"VERIFY receipt chain: {str(ledger['valid']).lower()} ({ledger['receipts']} receipts)",
             (
                 "EVAL   synthetic decisions: "
