@@ -1,0 +1,73 @@
+name: External review finding
+description: Submit a public-safe independent review, clean-install result, or methodology finding
+title: "[Review]: "
+labels: ["external-review", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for challenging the project. Do not disclose vulnerabilities, credentials, private prompts, customer data, internal paths, or operational exploit details here. Use the private security path in SECURITY.md when needed.
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or release reviewed
+      placeholder: Full commit SHA or immutable release tag
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Review area
+      options:
+        - Authenticated host context
+        - Admission semantics
+        - Receipt privacy
+        - Chain integrity or canonicalization
+        - Evaluation methodology
+        - Packaging or clean installation
+        - GitHub Action
+        - Documentation claim
+        - Other public-safe finding
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, runtime versions, installation method, and relevant tools.
+    validations:
+      required: true
+  - type: textarea
+    id: finding
+    attributes:
+      label: Finding
+      description: State the expected and observed behavior using synthetic or public-safe evidence.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction or review method
+      description: Include minimal commands, fixtures, or methodology.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Why it matters
+      description: Explain false-confidence, privacy, compatibility, portability, or adoption implications.
+    validations:
+      required: true
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Suggested correction or next test
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Public-safety confirmation
+      options:
+        - label: This report is safe to discuss publicly and contains no secret, private, customer, or live exploit material.
+          required: true
+        - label: I reviewed the project's stated limitations and am not presenting synthetic results as a security certification.
+          required: true

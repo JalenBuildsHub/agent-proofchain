@@ -1,0 +1,176 @@
+name: Agent ProofChain evidence
+
+description: Generate privacy-safe admission, conformance, evaluation, and tamper evidence in CI.
+
+author: Jalen Builds Studio
+
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  python-version:
+    description: Python version used to install and run Agent ProofChain.
+    required: false
+    default: "3.13"
+  output-directory:
+    description: Directory in the caller workspace for generated JSON and Markdown evidence.
+    required: false
+    default: proofchain-evidence
+  policy:
+    description: Optional policy path. Defaults to the action's synthetic example policy.
+    required: false
+    default: ""
+  fixtures:
+    description: Optional fixture path. Defaults to the action's synthetic v0.2 corpus.
+    required: false
+    default: ""
+  vector:
+    description: Optional receipt-vector path. Defaults to the bundled conformance vector.
+    required: false
+    default: ""
+
+outputs:
+  evidence-directory:
+    description: Directory containing generated evidence files.
+    value: ${{ steps.evidence.outputs.evidence-directory }}
+  conformance-valid:
+    description: Whether the selected receipt vector passed conformance verification.
+    value: ${{ steps.evidence.outputs.conformance-valid }}
+  chain-head:
+    description: Final receipt-chain hash from the selected conformance vector.
+    value: ${{ steps.evidence.outputs.chain-head }}
+  fixture-sha256:
+    description: SHA-256 digest of the selected evaluation fixture corpus.
+    value: ${{ steps.evidence.outputs.fixture-sha256 }}
+  evaluation-correct:
+    description: Number of fixtures matching classification and reason-code expectations.
+    value: ${{ steps.evidence.outputs.evaluation-correct }}
+  evaluation-total:
+    description: Total number of evaluated fixtures.
+    value: ${{ steps.evidence.outputs.evaluation-total }}
+  false-allows:
+    description: Number of expected-deny fixtures that were allowed.
+    value: ${{ steps.evidence.outputs.false-allows }}
+  false-denies:
+    description: Number of expected-allow fixtures that were denied.
+    value: ${{ steps.evidence.outputs.false-denies }}
+  tamper-matched:
+    description: Number of tamper scenarios matching their documented expected outcome.
+    value: ${{ steps.evidence.outputs.tamper-matched }}
+  tamper-total:
+    description: Total number of tamper scenarios.
+    value: ${{ steps.evidence.outputs.tamper-total }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Agent ProofChain from the action source
+      shell: bash
+      run: python -m pip install "$GITHUB_ACTION_PATH"
+
+    - name: Generate evidence
+      id: evidence
+      shell: bash
+      env:
+        INPUT_OUTPUT_DIRECTORY: ${{ inputs.output-directory }}
+        INPUT_POLICY: ${{ inputs.policy }}
+        INPUT_FIXTURES: ${{ inputs.fixtures }}
+        INPUT_VECTOR: ${{ inputs.vector }}
+      run: |
+        set -euo pipefail
+
+        output_directory="$INPUT_OUTPUT_DIRECTORY"
+        policy_path="$INPUT_POLICY"
+        fixtures_path="$INPUT_FIXTURES"
+        vector_path="$INPUT_VECTOR"
+
+        if [[ -z "$policy_path" ]]; then
+          policy_path="$GITHUB_ACTION_PATH/examples/policy.json"
+        fi
+        if [[ -z "$fixtures_path" ]]; then
+          fixtures_path="$GITHUB_ACTION_PATH/evals/synthetic-v0.2.json"
+        fi
+        if [[ -z "$vector_path" ]]; then
+          vector_path="$GITHUB_ACTION_PATH/spec/vectors/receipt-chain-v2.json"
+        fi
+
+        mkdir -p "$output_directory"
+
+        proofchain demo --json > "$output_directory/demo.json"
+        proofchain conformance \
+          --vector "$vector_path" \
+          --output "$output_directory/conformance.json" \
+          > /dev/null
+        proofchain eval \
+          --policy "$policy_path" \
+          --fixtures "$fixtures_path" \
+          --output "$output_directory/evaluation.json" \
+          --markdown-output "$output_directory/evaluation.md" \
+          > /dev/null
+        proofchain tamper-eval \
+          --output "$output_directory/tamper.json" \
+          --markdown-output "$output_directory/tamper.md" \
+          > /dev/null
+
+        OUTPUT_DIRECTORY="$output_directory" python - <<'PY'
+        import json
+        import os
+        from pathlib import Path
+
+        root = Path(os.environ["OUTPUT_DIRECTORY"])
+        conformance = json.loads((root / "conformance.json").read_text(encoding="utf-8"))
+        evaluation = json.loads((root / "evaluation.json").read_text(encoding="utf-8"))
+        tamper = json.loads((root / "tamper.json").read_text(encoding="utf-8"))
+
+        summary = evaluation["summary"]
+        benchmark = evaluation["benchmark"]
+        outputs = {
+            "evidence-directory": str(root),
+            "conformance-valid": str(bool(conformance["valid"])).lower(),
+            "chain-head": conformance["last_hash"],
+            "fixture-sha256": benchmark["fixture_sha256"],
+            "evaluation-correct": str(summary["correct"]),
+            "evaluation-total": str(summary["total"]),
+            "false-allows": str(summary["false_allows"]),
+            "false-denies": str(summary["false_denies"]),
+            "tamper-matched": str(tamper["matched"]),
+            "tamper-total": str(tamper["scenario_count"]),
+        }
+        with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as stream:
+            for key, value in outputs.items():
+                stream.write(f"{key}={value}\n")
+
+        markdown = "\n".join(
+            [
+                "## Agent ProofChain evidence",
+                "",
+                f"- Receipt conformance: **{'passed' if conformance['valid'] else 'failed'}**",
+                f"- Chain head: `{conformance['last_hash']}`",
+                (
+                    "- Admission evaluation: "
+                    f"**{summary['correct']} / {summary['total']} matched**"
+                ),
+                f"- False allows / false denies: **{summary['false_allows']} / {summary['false_denies']}**",
+                f"- Fixture SHA-256: `{benchmark['fixture_sha256']}`",
+                (
+                    "- Tamper outcomes: "
+                    f"**{tamper['matched']} / {tamper['scenario_count']} matched**"
+                ),
+                "",
+                "> Synthetic evaluation and local chain evidence are not a production security certification.",
+                f"> Known limitation: {tamper['limitation']}",
+                "",
+                f"Evidence directory: `{root}`",
+            ]
+        )
+        with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as stream:
+            stream.write(markdown + "\n")
+        PY
+
+        echo "Generated Agent ProofChain evidence in $output_directory"
