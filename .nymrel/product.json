@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "agent-proofchain",
+  "name": "Agent ProofChain",
+  "canonicalUrl": "https://github.com/JalenBuildsHub/agent-proofchain",
+  "repository": "JalenBuildsHub/agent-proofchain",
+  "lifecycleStatus": "prototype",
+  "audiences": [
+    "Teams that need portable evidence for AI-agent authorization decisions",
+    "Agent-platform builders working across multiple model and runtime providers",
+    "Maintainers evaluating tamper-evident receipts and reproducible agent-policy tests"
+  ],
+  "problems": [
+    "Agent systems need a durable record of who requested an action and which capability was evaluated",
+    "Decision evidence should not expose raw prompts, secrets, or caller-controlled identity claims",
+    "Teams need independently verifiable receipt chains and deterministic evaluation fixtures"
+  ],
+  "offers": [
+    {
+      "id": "open-source-proofchain",
+      "name": "Agent ProofChain CLI and evaluation foundation",
+      "kind": "free-tool",
+      "availability": "active",
+      "cta": {
+        "label": "Review Agent ProofChain",
+        "url": "https://github.com/JalenBuildsHub/agent-proofchain",
+        "intent": "try"
+      }
+    }
+  ],
+  "primaryCta": {
+    "label": "Run the evaluation",
+    "url": "https://github.com/JalenBuildsHub/agent-proofchain",
+    "intent": "try"
+  },
+  "claims": [
+    {
+      "id": "provider-neutral-evidence-layer",
+      "status": "verified",
+      "internalStatement": "Agent ProofChain is a provider-neutral safety and evidence layer for AI-agent systems.",
+      "publicWording": "Evaluate agent capability requests and record portable evidence across model and runtime providers.",
+      "evidence": [
+        {
+          "type": "repository",
+          "ref": "JalenBuildsHub/agent-proofchain:README.md"
+        }
+      ]
+    },
+    {
+      "id": "tamper-evident-receipts",
+      "status": "verified",
+      "internalStatement": "Decision receipts store digests and form a SHA-256 hash chain that can be verified independently.",
+      "publicWording": "Write decision receipts into an independently verifiable SHA-256 hash chain without storing caller-controlled fields in plaintext.",
+      "evidence": [
+        {
+          "type": "repository",
+          "ref": "JalenBuildsHub/agent-proofchain:README.md#core-guarantees"
+        },
+        {
+          "type": "test",
+          "ref": "JalenBuildsHub/agent-proofchain:pytest"
+        }
+      ]
+    },
+    {
+      "id": "evaluation-foundation",
+      "status": "verified",
+      "internalStatement": "The v0.2 pilot includes a 40-case synthetic corpus, decision metrics, reason-code assertions, latency measurements, tamper tests, and provider-neutral adapter contracts.",
+      "publicWording": "Reproduce a 40-case synthetic evaluation covering identity, authorization, attribution, injection-shaped instructions, thresholds, and ledger tampering.",
+      "evidence": [
+        {
+          "type": "repository",
+          "ref": "JalenBuildsHub/agent-proofchain:README.md#v02-evaluation-foundation"
+        }
+      ]
+    }
+  ],
+  "contentPillars": [
+    "Agent identity and capability evidence",
+    "Tamper-evident decision receipts",
+    "Provider-neutral runtime adapters",
+    "Prompt-injection-shaped request evaluation",
+    "Transparent limitations and reproducible benchmarks"
+  ],
+  "approvedChannels": [
+    "blog",
+    "github",
+    "linkedin",
+    "x",
+    "reddit",
+    "youtube"
+  ],
+  "agentCapabilities": [
+    "read-product-context",
+    "draft-campaign",
+    "draft-copy",
+    "propose-schedule",
+    "read-analytics",
+    "propose-experiment"
+  ],
+  "prohibitedClaims": [
+    "Claims that ProofChain authenticates networks, issues credentials, sandboxes agents, or guarantees injection detection",
+    "Claims that the synthetic benchmark is a security certification or proves production effectiveness",
+    "Claims that hash chaining alone detects final-row truncation without an external signed checkpoint"
+  ],
+  "attributionNamespace": "agent-proofchain",
+  "supportLevel": "self-serve",
+  "owner": {
+    "team": "Nymrel Studio — Agent ProofChain",
+    "reviewCadenceDays": 30,
+    "lastReviewedAt": "2026-07-29T05:17:00Z"
+  }
+}

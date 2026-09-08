@@ -12,6 +12,9 @@ jobs:
     with:
       canary_mode: false
       guard_ref: 3a3e9ea17ca7655cb635f06f7fb51aa0b00ce1c5
+    # GitHub's current Copilot CLI contract requires copilot-requests: write.
+    # actionlint 1.7.12 and Zizmor 1.29.0 do not yet recognize this new scope.
+    # zizmor: ignore[excessive-permissions]
     permissions:
       actions: read
       contents: write

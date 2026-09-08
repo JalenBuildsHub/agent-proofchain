@@ -108,9 +108,7 @@ def validate_receipt_v2(payload: Any, sequence: int) -> list[str]:
             )
 
     _validate_string_array(payload.get("reason_codes"), "reason_codes", errors, sequence)
-    _validate_string_array(
-        payload.get("injection_matches"), "injection_matches", errors, sequence
-    )
+    _validate_string_array(payload.get("injection_matches"), "injection_matches", errors, sequence)
 
     for field in sorted(DIGEST_FIELDS):
         value = payload.get(field)
@@ -143,7 +141,7 @@ def verify_receipt_chain_vector(document: Any) -> dict[str, Any]:
             "valid": False,
             "receipts": 0,
             "last_hash": "GENESIS",
-            "errors": errors + ["receipts must be an array"],
+            "errors": [*errors, "receipts must be an array"],
         }
 
     previous_hash = "GENESIS"
@@ -155,7 +153,8 @@ def verify_receipt_chain_vector(document: Any) -> dict[str, Any]:
         sequence = receipt.get("sequence")
         if type(sequence) is bool or sequence != expected_sequence:
             errors.append(
-                f"receipt {expected_sequence}: sequence must equal {expected_sequence}, got {sequence!r}"
+                f"receipt {expected_sequence}: sequence must equal "
+                f"{expected_sequence}, got {sequence!r}"
             )
 
         payload = receipt.get("payload")
@@ -176,7 +175,9 @@ def verify_receipt_chain_vector(document: Any) -> dict[str, Any]:
             try:
                 expected_hash = compute_receipt_hash(previous_hash, payload)
             except (ValueError, TypeError):
-                errors.append(f"receipt {expected_sequence}: payload must contain finite JSON values")
+                errors.append(
+                    f"receipt {expected_sequence}: payload must contain finite JSON values"
+                )
                 continue
             if observed_hash != expected_hash:
                 errors.append(f"receipt {expected_sequence}: receipt_hash mismatch")

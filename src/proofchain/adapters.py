@@ -31,7 +31,7 @@ class AuthenticatedRuntimeContext:
     provider_request_id: str | None = None
 
     def __post_init__(self) -> None:
-        required = {
+        required: dict[str, object] = {
             "provider": self.provider,
             "claimed_actor": self.claimed_actor,
             "actor_family": self.actor_family,
@@ -39,8 +39,11 @@ class AuthenticatedRuntimeContext:
             "source": self.source,
         }
         for field, value in required.items():
-            if not value.strip():
-                raise AdapterContractError(f"{field} must be non-empty")
+            _strict_context_text(field, value)
+        if self.model is not None:
+            _strict_context_text("model", self.model)
+        if self.provider_request_id is not None:
+            _strict_context_text("provider_request_id", self.provider_request_id)
 
 
 @dataclass(frozen=True)
@@ -79,6 +82,15 @@ class MappingRuntimeAdapter:
     action_field: str = "action"
     content_field: str = "content"
 
+    def __post_init__(self) -> None:
+        for field, value in {
+            "provider": self.provider,
+            "capability_field": self.capability_field,
+            "action_field": self.action_field,
+            "content_field": self.content_field,
+        }.items():
+            _strict_context_text(field, value)
+
     def normalize(
         self,
         payload: Mapping[str, Any],
@@ -96,8 +108,8 @@ class MappingRuntimeAdapter:
             claimed_actor=context.claimed_actor,
             actor_family=context.actor_family,
             runtime_family=context.runtime_family,
-            capability=str(payload.get(self.capability_field, "mutation")),
-            action=str(payload.get(self.action_field, "unknown")),
+            capability=_required_payload_text(payload, self.capability_field),
+            action=_required_payload_text(payload, self.action_field),
             model=context.model,
             content=payload.get(self.content_field),
             source=context.source,
@@ -135,3 +147,30 @@ class LocalRuntimeAdapter(MappingRuntimeAdapter):
 
     def __init__(self) -> None:
         super().__init__(provider="local")
+
+
+def _strict_context_text(field: str, value: object) -> str:
+    if not isinstance(value, str):
+        raise AdapterContractError(f"{field} must be a string")
+    if not value.strip():
+        raise AdapterContractError(f"{field} must be non-empty")
+    if value != value.strip():
+        raise AdapterContractError(f"{field} must not include surrounding whitespace")
+    if len(value.encode("utf-8")) > 1_024:
+        raise AdapterContractError(f"{field} exceeds 1024 UTF-8 bytes")
+    return value
+
+
+def _required_payload_text(payload: Mapping[str, Any], field: str) -> str:
+    if field not in payload:
+        raise AdapterContractError(f"payload requires {field}")
+    value = payload[field]
+    if not isinstance(value, str):
+        raise AdapterContractError(f"payload {field} must be a string")
+    if not value.strip():
+        raise AdapterContractError(f"payload {field} must be non-empty")
+    if value != value.strip():
+        raise AdapterContractError(f"payload {field} must not include surrounding whitespace")
+    if len(value.encode("utf-8")) > 1_024:
+        raise AdapterContractError(f"payload {field} exceeds 1024 UTF-8 bytes")
+    return value
