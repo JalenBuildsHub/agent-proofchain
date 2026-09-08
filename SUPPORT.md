@@ -21,7 +21,7 @@ Use the bug-report issue form. A useful report includes a deterministic reproduc
 
 ## Security vulnerabilities
 
-Do not open a public issue. Follow `SECURITY.md` and report privately to `contact@jalenbuilds.com`.
+Do not open a public issue. Follow `SECURITY.md` and report privately to `contact@nymrel.com`.
 
 ## Commercial support
 

@@ -3,12 +3,12 @@ message: "If Agent ProofChain supports your research or evaluation, cite the sof
 title: "Agent ProofChain"
 type: software
 authors:
-  - name: "Jalen Builds Studio"
-    email: "contact@jalenbuilds.com"
+  - name: "Nymrel"
+    email: "contact@nymrel.com"
 version: "0.1.0"
 license: MIT
-repository-code: "https://github.com/JalenBuildsHub/agent-proofchain"
-url: "https://github.com/JalenBuildsHub/agent-proofchain"
+repository-code: "https://github.com/nymrel/agent-proofchain"
+url: "https://github.com/nymrel/agent-proofchain"
 abstract: >-
   A provider-neutral admission and evidence layer for AI-agent systems, with
   default-deny capability decisions, privacy-safe tamper-evident receipts,

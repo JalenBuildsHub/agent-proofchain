@@ -2,7 +2,7 @@ name: Agent ProofChain evidence
 
 description: Generate privacy-safe admission, conformance, evaluation, and tamper evidence in CI.
 
-author: Jalen Builds Studio
+author: Nymrel
 
 branding:
   icon: shield

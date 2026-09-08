@@ -9,7 +9,7 @@ description = "Provider-neutral admission decisions and tamper-evident action re
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-authors = [{ name = "Jalen Builds Studio", email = "contact@jalenbuilds.com" }]
+authors = [{ name = "Nymrel", email = "contact@nymrel.com" }]
 keywords = [
   "ai-agents",
   "agent-security",
@@ -34,11 +34,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/JalenBuildsHub/agent-proofchain"
-Documentation = "https://github.com/JalenBuildsHub/agent-proofchain#readme"
-Repository = "https://github.com/JalenBuildsHub/agent-proofchain"
-Issues = "https://github.com/JalenBuildsHub/agent-proofchain/issues"
-Changelog = "https://github.com/JalenBuildsHub/agent-proofchain/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/nymrel/agent-proofchain"
+Documentation = "https://github.com/nymrel/agent-proofchain#readme"
+Repository = "https://github.com/nymrel/agent-proofchain"
+Issues = "https://github.com/nymrel/agent-proofchain/issues"
+Changelog = "https://github.com/nymrel/agent-proofchain/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3", "ruff>=0.9", "build>=1.2"]

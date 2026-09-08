@@ -1,6 +1,6 @@
 # Agent ProofChain
 
-[![CI](https://github.com/JalenBuildsHub/agent-proofchain/actions/workflows/ci.yml/badge.svg)](https://github.com/JalenBuildsHub/agent-proofchain/actions/workflows/ci.yml)
+[![CI](https://github.com/nymrel/agent-proofchain/actions/workflows/ci.yml/badge.svg)](https://github.com/nymrel/agent-proofchain/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB.svg)](pyproject.toml)
 [![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)](ROADMAP.md)

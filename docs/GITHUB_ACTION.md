@@ -25,7 +25,7 @@ jobs:
 
       - name: Generate Agent ProofChain evidence
         id: proofchain
-        uses: JalenBuildsHub/agent-proofchain@REVIEWED_COMMIT_SHA
+        uses: nymrel/agent-proofchain@REVIEWED_COMMIT_SHA
         with:
           output-directory: proofchain-evidence
           policy: policy/agent-policy.json

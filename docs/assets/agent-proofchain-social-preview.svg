@@ -68,5 +68,5 @@
     <text x="979" y="55" text-anchor="middle" font-size="18" font-weight="720" fill="#ffffff">proofchain demo</text>
   </g>
 
-  <text x="84" y="602" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" fill="#70809c">github.com/JalenBuildsHub/agent-proofchain</text>
+  <text x="84" y="602" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" fill="#70809c">github.com/nymrel/agent-proofchain</text>
 </svg>

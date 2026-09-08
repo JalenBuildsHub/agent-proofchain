@@ -36,6 +36,6 @@ Synthetic adversarial examples are welcome when they are clearly labeled, non-op
 
 Maintainers may edit or remove comments, close issues or pull requests, restrict participation, or report conduct to GitHub when necessary to protect contributors, users, systems, or private information.
 
-Reports about community conduct may be sent to `contact@jalenbuilds.com`. Include enough context for review, but do not send unrelated secrets or private customer data.
+Reports about community conduct may be sent to `contact@nymrel.com`. Include enough context for review, but do not send unrelated secrets or private customer data.
 
 Maintainers will review reports as privately and fairly as practical. Retaliation against good-faith reporters is not accepted.
