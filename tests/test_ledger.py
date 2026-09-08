@@ -78,3 +78,45 @@ def test_failed_serialization_does_not_block_following_valid_append(tmp_path):
     appended = ledger.append_payload({"schema_version": 1, "receipt_type": "valid"})
     assert appended["sequence"] == 1
     assert ledger.verify()["valid"] is True
+
+
+def test_verify_fails_closed_without_creating_missing_receipts_table(tmp_path):
+    path = tmp_path / "proof.db"
+    with sqlite3.connect(path):
+        pass
+
+    result = ReceiptLedger(path).verify()
+
+    assert result == {"valid": False, "receipts": 0, "failure": "missing_receipts_table"}
+    with sqlite3.connect(path) as conn:
+        assert conn.execute(
+            "SELECT name FROM sqlite_schema WHERE type = 'table' AND name = 'receipts'"
+        ).fetchone() is None
+
+
+def test_verify_rejects_non_contiguous_receipt_sequence(tmp_path):
+    path = tmp_path / "proof.db"
+    ledger = ReceiptLedger(path)
+    ledger.append(decision())
+    ledger.append(decision())
+    with sqlite3.connect(path) as conn:
+        conn.execute("UPDATE receipts SET sequence = 3 WHERE sequence = 2")
+
+    result = ledger.verify()
+
+    assert result["valid"] is False
+    assert result["failure"] == "non_contiguous_sequence"
+
+
+def test_verify_rejects_tampered_admission_payload(tmp_path):
+    path = tmp_path / "proof.db"
+    ledger = ReceiptLedger(path)
+    ledger.append(decision())
+    ledger.append(decision())
+    with sqlite3.connect(path) as conn:
+        conn.execute("UPDATE receipts SET payload_json = '{}' WHERE sequence = 2")
+
+    result = ledger.verify()
+
+    assert result["valid"] is False
+    assert result["failure"] == "hash_chain_mismatch"

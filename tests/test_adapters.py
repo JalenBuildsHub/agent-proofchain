@@ -75,6 +75,22 @@ def test_adapter_rejects_provider_context_mismatch():
 
 
 @pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"capability": "read"},
+        {"action": "inspect"},
+        {"capability": ["read"], "action": "inspect"},
+        {"capability": "read", "action": {"name": "inspect"}},
+        {"capability": " read ", "action": "inspect"},
+    ],
+)
+def test_adapter_rejects_missing_or_ambiguous_task_intent(payload):
+    with pytest.raises(AdapterContractError):
+        OpenAIAdapter().normalize(payload, context())
+
+
+@pytest.mark.parametrize(
     "field",
     ["provider", "claimed_actor", "actor_family", "runtime_family", "source"],
 )
@@ -90,3 +106,10 @@ def test_context_requires_nonempty_trusted_fields(field):
     values[field] = " "
     with pytest.raises(AdapterContractError):
         AuthenticatedRuntimeContext(**values)
+
+
+def test_context_rejects_surrounding_whitespace_and_non_string_values():
+    with pytest.raises(AdapterContractError):
+        context(source=" trusted-runtime ")
+    with pytest.raises(AdapterContractError):
+        context(claimed_actor=123)

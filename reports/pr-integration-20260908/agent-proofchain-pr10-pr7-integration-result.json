@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "agent-proofchain-pr10-pr7-integration-result/v1",
+  "status": "candidate_validated",
+  "candidate": {
+    "branch": "codex/agent-proofchain-pr10-pr7-integration-20260908",
+    "base": "080a33994f31d3d7783367df189c8506811d0e7a"
+  },
+  "sources": [
+    {
+      "pr": 10,
+      "head": "41fb5fc3be7671a7bbcefe47cea69f4a37eb36ca",
+      "mergeBase": "9b8a5b901d81adf5b8b870632734232342d3b46e",
+      "integration": "Applied its original base-to-head patch in three-way mode, retaining newer current-main protocol and distribution functionality."
+    },
+    {
+      "pr": 7,
+      "head": "694f5c491e65846395123e0f8dcb6405a54667e3",
+      "mergeBase": "9da90ec274584dcfa0f618ff10ba5b49097c7762",
+      "integration": "Added the distinct product manifest and distribution-policy/request documentation cohort."
+    }
+  ],
+  "implementation": [
+    "Retained strict policy parsing, source attribution, bounded content admission, provider adapter checks, generic CLI input handling, release metadata, and release-package verification.",
+    "Verification opens existing ledgers read-only, validates receipt-table structure and sequence continuity, and rejects hash-chain tampering without repairing evidence.",
+    "Preserved current portable receipt conformance, generic distribution receipts, and documented the external signed-checkpoint limit for final-row truncation."
+  ],
+  "validation": {
+    "passed": [
+      "PYTHONPATH=src python -m pytest -q: 100 passed",
+      "mypy src scripts: 13 source files passed",
+      "ruff on PR10 runtime, release, and test cohort: passed",
+      "Python sdist and wheel build plus scripts/verify-release.py inspection",
+      "portable receipt-chain conformance vector: 2 receipts valid",
+      "tamper evaluation: payload, previous-hash, receipt-hash, and middle-row deletion detected; final-row truncation reported as the documented external-checkpoint limit"
+    ],
+    "limits": [
+      "The repository does not implement nonce consumption, replay prevention, or contract expiry; its documentation assigns these controls to the authenticated host or PermitMesh boundary.",
+      "The local environment-wide pip-audit result is not project dependency evidence and is not treated as a candidate package finding."
+    ]
+  },
+  "operations": {
+    "pushed": false,
+    "merged": false,
+    "deployed": false,
+    "registryOrProviderMutation": false
+  }
+}

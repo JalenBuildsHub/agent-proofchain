@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
+import sys
+from collections.abc import Sequence
 from pathlib import Path
 
+from . import __version__
 from .admission import AdmissionRequest, evaluate
 from .conformance import load_vector, verify_receipt_chain_vector
 from .demo import render_demo, run_demo
@@ -21,8 +25,9 @@ def _write_text(path: str, content: str) -> None:
     target.write_text(content, encoding="utf-8")
 
 
-def main() -> int:
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="proofchain")
+    parser.add_argument("--version", action="version", version=f"proofchain {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     demo_parser = sub.add_parser("demo", help="run a network-free end-to-end demonstration")
@@ -51,9 +56,10 @@ def main() -> int:
     tamper_parser = sub.add_parser("tamper-eval")
     tamper_parser.add_argument("--output")
     tamper_parser.add_argument("--markdown-output")
+    return parser
 
-    args = parser.parse_args()
 
+def _execute(args: argparse.Namespace) -> int:
     if args.command == "demo":
         result = run_demo()
         print(json.dumps(result, indent=2, sort_keys=True) if args.as_json else render_demo(result))
@@ -68,8 +74,7 @@ def main() -> int:
         return 0 if result["valid"] else 1
 
     if args.command == "verify":
-        ledger = ReceiptLedger(args.ledger)
-        result = ledger.verify()
+        result = ReceiptLedger(args.ledger).verify()
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0 if result["valid"] else 1
 
@@ -94,14 +99,23 @@ def main() -> int:
         return 0 if result["all_expected_outcomes_matched"] else 1
 
     policy = AdmissionPolicy.from_json(args.policy)
-    request = AdmissionRequest.from_dict(
-        json.loads(Path(args.request).read_text(encoding="utf-8"))
-    )
+    request = AdmissionRequest.from_dict(json.loads(Path(args.request).read_text(encoding="utf-8")))
     decision = evaluate(request, policy)
-    ledger = ReceiptLedger(args.ledger)
-    receipt = ledger.append(decision)
+    receipt = ReceiptLedger(args.ledger).append(decision)
     print(json.dumps(receipt, indent=2, sort_keys=True))
     return 0 if decision.allowed else 2
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    try:
+        return _execute(args)
+    except (json.JSONDecodeError, OSError, sqlite3.Error, TypeError, ValueError):
+        print(
+            "proofchain: invalid input or unreadable ledger; no action was admitted",
+            file=sys.stderr,
+        )
+        return 2
 
 
 if __name__ == "__main__":

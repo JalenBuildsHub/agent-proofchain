@@ -1,18 +1,18 @@
 {
   "actor_capabilities": {
-    "builder": ["read", "advisory", "mutation"],
-    "reviewer": ["read", "advisory"],
-    "scout": ["read"]
+    "distribution-drafter": ["read", "advisory"],
+    "distribution-publisher": ["read", "advisory", "mutation"],
+    "distribution-analyst": ["read"]
   },
   "injection_threshold": 2,
-  "max_content_bytes": 200000,
+  "max_content_bytes": 32768,
   "model_required": true,
-  "source_required": true,
   "injection_indicators": [
     "ignore .*?(previous|prior|system|developer).*?(instructions|rules|policy)",
     "reveal|print|dump|exfiltrate|upload.*?(secret|token|credential|api key|password)",
     "disable|bypass|remove.*?(safety|guardrail|admission|approval|claim|audit)",
-    "execute|run.*?(hidden|encoded|base64|remote).*?(command|script|payload)",
+    "publish|schedule|send.*?(without|before).*?(approval|permit|review)",
+    "change|replace|forge.*?(campaign|revision|approval|permit).*?(id|hash|reference)",
     "do not (log|audit|report|tell)",
     "override.*?(owner|lease|permission|policy)"
   ]
