@@ -13,4 +13,5 @@ def canonical_json(payload: Any) -> str:
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
+        allow_nan=False,
     )

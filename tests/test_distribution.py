@@ -167,3 +167,13 @@ def test_distribution_receipt_requires_provider_post_ids_for_terminal_success(st
         DistributionExecutionReceipt(
             **{**receipt.__dict__, "status": status, "provider_post_ids": ()}
         ).to_receipt()
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_generic_ledger_rejects_non_json_numbers_before_opening_database(tmp_path, value):
+    database = tmp_path / "finite.db"
+    ledger = ReceiptLedger(database)
+    with pytest.raises(ValueError):
+        ledger.append_payload({"schema_version": 1, "value": value})
+    assert not database.exists()
+    assert ledger.append_payload({"schema_version": 1, "value": 1})["sequence"] == 1
