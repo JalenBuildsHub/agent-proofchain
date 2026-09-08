@@ -88,13 +88,14 @@ def test_receipt_validator_rejects_invalid_digest_and_array_contracts():
     assert "receipt 1: reason_codes must be a string array" in errors
 
 
-def test_malformed_payload_matches_javascript_chain_progression():
+def test_malformed_payload_matches_javascript_chain_progression(tmp_path: Path):
     vector = copy.deepcopy(load_vector(VECTOR_PATH))
     vector["receipts"][0]["payload"] = "malformed"
     expected = verify_receipt_chain_vector(vector)
+    vector_path = tmp_path / "malformed-vector.json"
+    vector_path.write_text(json.dumps(vector), encoding="utf-8")
     completed = subprocess.run(
-        ["node", "examples/verify_receipt_vector.mjs"],
-        input=json.dumps(vector),
+        ["node", "examples/verify_receipt_vector.mjs", str(vector_path)],
         text=True,
         capture_output=True,
         check=False,
